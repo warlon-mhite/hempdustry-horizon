@@ -11,6 +11,7 @@ mod criteria;
 pub mod farm;
 mod host;
 mod level;
+mod loot;
 mod states;
 
 use std::sync::{Mutex, OnceLock, PoisonError};
@@ -18,8 +19,8 @@ use std::sync::{Mutex, OnceLock, PoisonError};
 use horizon_client::mod_api::{
     CanSurviveEvent, DestroyBlockEvent, Flow, Hooks, Host, IsBonemealSuccessEvent,
     IsValidBonemealTargetEvent, ItemStack, LevelDimension, LevelHost, LevelRandomHost,
-    LevelTickPostEvent, LevelWriteHost, MayPlaceOnEvent, PerformBonemealEvent, RandomSource,
-    RandomTickEvent, TickEvent, UseItemOnEvent,
+    LevelTickPostEvent, LevelWriteHost, LootFunctionEvent, LootTableLoadEvent, MayPlaceOnEvent,
+    PerformBonemealEvent, RandomSource, RandomTickEvent, TickEvent, UseItemOnEvent,
 };
 
 use farm::harvest;
@@ -303,5 +304,27 @@ impl Hooks for Hempdustry {
             world.harvest(&harvest);
         }
         Flow::Continue
+    }
+
+    /// Rebuilds the `hempdustry:spoiling` entries, which Horizon's engines can't run, from
+    /// vanilla entries and the two functions below ([`loot`]).
+    fn loot_table_load(&self, event: &mut LootTableLoadEvent<'_>) {
+        loot::rewrite_table(event.table);
+    }
+
+    fn loot_function(&self, event: &mut LootFunctionEvent<'_>) {
+        match event.kind {
+            loot::KEEP => {
+                let level = event
+                    .ctx
+                    .tool
+                    .as_ref()
+                    .map_or(0, |tool| loot::level_of(event.data, &tool.enchantments));
+                event.stack.count =
+                    loot::keep(event.data, event.ctx.seed, level, event.stack.count);
+            }
+            loot::SPOILED => event.stack.count = loot::take_spoiled(),
+            _ => {}
+        }
     }
 }

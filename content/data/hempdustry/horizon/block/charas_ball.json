@@ -20,9 +20,9 @@
     ]
   },
   "components": {
+    "minecraft:item_model": "hempdustry:charas_ball",
     "minecraft:item_name": {
       "translate": "block.hempdustry.charas_ball"
-    },
-    "minecraft:item_model": "hempdustry:charas_ball"
+    }
   }
 }

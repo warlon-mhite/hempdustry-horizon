@@ -2,15 +2,6 @@
   "template": "minecraft:stick",
   "max_stack_size": 1,
   "components": {
-    "minecraft:item_name": {
-      "translate": "item.hempdustry.hemp_beanie"
-    },
-    "minecraft:damage": 0,
-    "minecraft:equippable": {
-      "slot": "head",
-      "equip_sound": "minecraft:item.armor.equip_leather"
-    },
-    "minecraft:item_model": "hempdustry:hemp_beanie",
     "minecraft:attribute_modifiers": [
       {
         "type": "minecraft:armor",
@@ -27,19 +18,28 @@
         "slot": "head"
       }
     ],
+    "minecraft:compostable": {
+      "layers": "hempdustry:compostable/chance_50"
+    },
     "minecraft:cooking_fuel": {
       "burn_time": "hempdustry:cooking/time_250",
       "speed_multiplier": "minecraft:cooking/speed_default"
     },
-    "minecraft:compostable": {
-      "layers": "hempdustry:compostable/chance_50"
-    },
-    "minecraft:repairable": {
-      "items": "#hempdustry:hemp_armor_repair"
-    },
-    "minecraft:max_damage": 55,
+    "minecraft:damage": 0,
     "minecraft:enchantable": {
       "value": 20
+    },
+    "minecraft:equippable": {
+      "slot": "head",
+      "equip_sound": "minecraft:item.armor.equip_leather"
+    },
+    "minecraft:item_model": "hempdustry:hemp_beanie",
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.hemp_beanie"
+    },
+    "minecraft:max_damage": 55,
+    "minecraft:repairable": {
+      "items": "#hempdustry:hemp_armor_repair"
     }
   }
 }

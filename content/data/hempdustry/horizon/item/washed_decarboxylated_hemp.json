@@ -1,12 +1,12 @@
 {
   "template": "minecraft:stick",
   "components": {
-    "minecraft:item_name": {
-      "translate": "item.hempdustry.washed_decarboxylated_hemp"
-    },
-    "minecraft:item_model": "hempdustry:washed_decarboxylated_hemp",
     "minecraft:compostable": {
       "layers": "hempdustry:compostable/chance_50"
+    },
+    "minecraft:item_model": "hempdustry:washed_decarboxylated_hemp",
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.washed_decarboxylated_hemp"
     },
     "!minecraft:cooking_fuel": {}
   }

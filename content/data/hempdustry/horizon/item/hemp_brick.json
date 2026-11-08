@@ -1,12 +1,12 @@
 {
   "template": "minecraft:stick",
   "components": {
-    "minecraft:item_name": {
-      "translate": "item.hempdustry.hemp_brick"
-    },
-    "minecraft:item_model": "hempdustry:hemp_brick",
     "minecraft:compostable": {
       "layers": "hempdustry:compostable/chance_5"
+    },
+    "minecraft:item_model": "hempdustry:hemp_brick",
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.hemp_brick"
     },
     "!minecraft:cooking_fuel": {}
   }

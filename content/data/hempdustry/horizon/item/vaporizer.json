@@ -2,17 +2,17 @@
   "template": "minecraft:stick",
   "max_stack_size": 1,
   "components": {
+    "minecraft:damage": 0,
+    "minecraft:enchantable": {
+      "value": 5
+    },
+    "minecraft:item_model": "hempdustry:vaporizer",
     "minecraft:item_name": {
       "translate": "item.hempdustry.vaporizer"
     },
-    "minecraft:damage": 0,
-    "minecraft:item_model": "hempdustry:vaporizer",
+    "minecraft:max_damage": 32,
     "minecraft:repairable": {
       "items": "minecraft:iron_ingot"
-    },
-    "minecraft:max_damage": 32,
-    "minecraft:enchantable": {
-      "value": 5
     },
     "!minecraft:cooking_fuel": {}
   }

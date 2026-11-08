@@ -2,9 +2,6 @@
   "template": "minecraft:stick",
   "max_stack_size": 1,
   "components": {
-    "minecraft:item_name": {
-      "translate": "item.hempdustry.hemp_harness"
-    },
     "minecraft:equippable": {
       "slot": "body",
       "equip_sound": "minecraft:entity.happy_ghast.equip",
@@ -15,6 +12,9 @@
       "shearing_sound": "minecraft:entity.happy_ghast.unequip"
     },
     "minecraft:item_model": "hempdustry:hemp_harness",
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.hemp_harness"
+    },
     "!minecraft:cooking_fuel": {}
   }
 }

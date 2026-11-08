@@ -1,10 +1,10 @@
 {
   "template": "minecraft:stick",
   "components": {
+    "minecraft:item_model": "hempdustry:kief",
     "minecraft:item_name": {
       "translate": "item.hempdustry.kief"
     },
-    "minecraft:item_model": "hempdustry:kief",
     "!minecraft:cooking_fuel": {}
   }
 }

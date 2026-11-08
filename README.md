@@ -9,7 +9,7 @@ the Java repository, and its behaviour written again in Rust.
 | Part | What | Status |
 |---|---|---|
 | Content (`.hmod`) | Every block, item, recipe, loot table, tag, advancement, model, texture, sound and translation | Builds; every block places and draws |
-| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Farming, smoking, eating, the Decarboxylator, the Infuser, the Hemp Press, the Sifting Box and the water cauldron (`native/`): unit-tested, and played in a game on Horizon `2ebf00a` |
+| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Farming, smoking, eating, the Decarboxylator, the Infuser, the Hemp Press, the Sifting Box and the water cauldron (`native/`): unit-tested, and played in a game on Horizon `fdc87ae` |
 
 ## How it is built
 

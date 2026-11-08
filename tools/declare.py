@@ -146,11 +146,13 @@ def sound_block(facts, ours_sound, template_id):
 
 
 def component_patch(ours, base):
+    # Sorted: the game hands its components over in no fixed order, and a rebuild on the same
+    # facts must write the same files.
     patch = {}
-    for k, v in ours.items():
-        if k not in base or not close(base[k], v):
-            patch[k] = v
-    for k in base:
+    for k in sorted(ours):
+        if k not in base or not close(base[k], ours[k]):
+            patch[k] = ours[k]
+    for k in sorted(base):
         if k not in ours:
             patch["!" + k] = {}
     return patch

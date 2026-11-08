@@ -42,9 +42,9 @@
     ]
   },
   "components": {
+    "minecraft:item_model": "hempdustry:hydro_tray",
     "minecraft:item_name": {
       "translate": "block.hempdustry.hydro_tray"
-    },
-    "minecraft:item_model": "hempdustry:hydro_tray"
+    }
   }
 }

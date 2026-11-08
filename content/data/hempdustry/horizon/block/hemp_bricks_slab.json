@@ -7,9 +7,9 @@
     "sounds": "minecraft:oak_planks"
   },
   "components": {
+    "minecraft:item_model": "hempdustry:hemp_bricks_slab",
     "minecraft:item_name": {
       "translate": "block.hempdustry.hemp_bricks_slab"
-    },
-    "minecraft:item_model": "hempdustry:hemp_bricks_slab"
+    }
   }
 }

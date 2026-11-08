@@ -1,12 +1,12 @@
 {
   "template": "minecraft:allium",
   "components": {
-    "minecraft:item_name": {
-      "translate": "block.hempdustry.indica_flower"
-    },
-    "minecraft:item_model": "hempdustry:indica_flower",
     "minecraft:compostable": {
       "layers": "hempdustry:compostable/chance_65"
+    },
+    "minecraft:item_model": "hempdustry:indica_flower",
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.indica_flower"
     }
   }
 }

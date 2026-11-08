@@ -1,12 +1,12 @@
 {
   "template": "minecraft:stick",
   "components": {
-    "minecraft:item_name": {
-      "translate": "item.hempdustry.indica_buds"
-    },
-    "minecraft:item_model": "hempdustry:indica_buds",
     "minecraft:compostable": {
       "layers": "hempdustry:compostable/chance_50"
+    },
+    "minecraft:item_model": "hempdustry:indica_buds",
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.indica_buds"
     },
     "!minecraft:cooking_fuel": {}
   }

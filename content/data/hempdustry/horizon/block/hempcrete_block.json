@@ -5,9 +5,9 @@
     "map_color": 0
   },
   "components": {
+    "minecraft:item_model": "hempdustry:hempcrete_block",
     "minecraft:item_name": {
       "translate": "block.hempdustry.hempcrete_block"
-    },
-    "minecraft:item_model": "hempdustry:hempcrete_block"
+    }
   }
 }

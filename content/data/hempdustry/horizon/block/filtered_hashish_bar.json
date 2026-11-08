@@ -222,9 +222,9 @@
     ]
   },
   "components": {
+    "minecraft:item_model": "hempdustry:filtered_hashish_bar",
     "minecraft:item_name": {
       "translate": "block.hempdustry.filtered_hashish_bar"
-    },
-    "minecraft:item_model": "hempdustry:filtered_hashish_bar"
+    }
   }
 }

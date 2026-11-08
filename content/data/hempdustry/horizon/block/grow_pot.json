@@ -70,9 +70,9 @@
     ]
   },
   "components": {
+    "minecraft:item_model": "hempdustry:grow_pot",
     "minecraft:item_name": {
       "translate": "block.hempdustry.grow_pot"
-    },
-    "minecraft:item_model": "hempdustry:grow_pot"
+    }
   }
 }

@@ -4,10 +4,10 @@
     "map_color": 0
   },
   "components": {
+    "minecraft:item_model": "hempdustry:decarboxylator",
     "minecraft:item_name": {
       "translate": "block.hempdustry.decarboxylator"
     },
-    "minecraft:item_model": "hempdustry:decarboxylator",
     "!minecraft:container": {}
   }
 }

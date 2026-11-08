@@ -2,17 +2,17 @@
   "template": "minecraft:stick",
   "max_stack_size": 1,
   "components": {
+    "minecraft:damage": 0,
+    "minecraft:enchantable": {
+      "value": 10
+    },
+    "minecraft:item_model": "hempdustry:magenta_bong",
     "minecraft:item_name": {
       "translate": "item.hempdustry.magenta_bong"
     },
-    "minecraft:damage": 0,
-    "minecraft:item_model": "hempdustry:magenta_bong",
+    "minecraft:max_damage": 24,
     "minecraft:repairable": {
       "items": "minecraft:magenta_stained_glass"
-    },
-    "minecraft:max_damage": 24,
-    "minecraft:enchantable": {
-      "value": 10
     },
     "!minecraft:cooking_fuel": {}
   }

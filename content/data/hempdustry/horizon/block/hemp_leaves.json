@@ -8,12 +8,12 @@
     "occludes": false
   },
   "components": {
-    "minecraft:item_name": {
-      "translate": "block.hempdustry.hemp_leaves"
-    },
-    "minecraft:item_model": "hempdustry:hemp_leaves",
     "minecraft:compostable": {
       "layers": "hempdustry:compostable/chance_50"
+    },
+    "minecraft:item_model": "hempdustry:hemp_leaves",
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.hemp_leaves"
     }
   }
 }

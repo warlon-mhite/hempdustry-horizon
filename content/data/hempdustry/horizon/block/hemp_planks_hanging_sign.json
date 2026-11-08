@@ -6,10 +6,10 @@
   "wood_type": "hempdustry:hemp",
   "wall_block": "hempdustry:hemp_planks_wall_hanging_sign",
   "components": {
+    "minecraft:item_model": "hempdustry:hemp_planks_hanging_sign",
     "minecraft:item_name": {
       "translate": "item.hempdustry.hemp_planks_hanging_sign"
     },
-    "minecraft:item_model": "hempdustry:hemp_planks_hanging_sign",
     "!minecraft:cooking_fuel": {},
     "!minecraft:sign_text_back": {},
     "!minecraft:sign_text_front": {}

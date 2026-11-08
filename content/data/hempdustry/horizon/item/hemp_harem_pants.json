@@ -2,16 +2,6 @@
   "template": "minecraft:stick",
   "max_stack_size": 1,
   "components": {
-    "minecraft:item_name": {
-      "translate": "item.hempdustry.hemp_harem_pants"
-    },
-    "minecraft:damage": 0,
-    "minecraft:equippable": {
-      "slot": "legs",
-      "equip_sound": "minecraft:item.armor.equip_leather",
-      "asset_id": "hempdustry:hemp_fiber"
-    },
-    "minecraft:item_model": "hempdustry:hemp_harem_pants",
     "minecraft:attribute_modifiers": [
       {
         "type": "minecraft:armor",
@@ -28,19 +18,29 @@
         "slot": "legs"
       }
     ],
+    "minecraft:compostable": {
+      "layers": "hempdustry:compostable/chance_50"
+    },
     "minecraft:cooking_fuel": {
       "burn_time": "hempdustry:cooking/time_350",
       "speed_multiplier": "minecraft:cooking/speed_default"
     },
-    "minecraft:compostable": {
-      "layers": "hempdustry:compostable/chance_50"
-    },
-    "minecraft:repairable": {
-      "items": "#hempdustry:hemp_armor_repair"
-    },
-    "minecraft:max_damage": 75,
+    "minecraft:damage": 0,
     "minecraft:enchantable": {
       "value": 20
+    },
+    "minecraft:equippable": {
+      "slot": "legs",
+      "equip_sound": "minecraft:item.armor.equip_leather",
+      "asset_id": "hempdustry:hemp_fiber"
+    },
+    "minecraft:item_model": "hempdustry:hemp_harem_pants",
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.hemp_harem_pants"
+    },
+    "minecraft:max_damage": 75,
+    "minecraft:repairable": {
+      "items": "#hempdustry:hemp_armor_repair"
     }
   }
 }

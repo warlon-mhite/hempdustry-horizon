@@ -1,10 +1,10 @@
 {
   "template": "minecraft:oak_button",
   "components": {
+    "minecraft:item_model": "hempdustry:hemp_planks_button",
     "minecraft:item_name": {
       "translate": "block.hempdustry.hemp_planks_button"
     },
-    "minecraft:item_model": "hempdustry:hemp_planks_button",
     "!minecraft:cooking_fuel": {}
   }
 }

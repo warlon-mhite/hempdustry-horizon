@@ -37,9 +37,9 @@
     ]
   },
   "components": {
+    "minecraft:item_model": "hempdustry:grow_lamp",
     "minecraft:item_name": {
       "translate": "block.hempdustry.grow_lamp"
-    },
-    "minecraft:item_model": "hempdustry:grow_lamp"
+    }
   }
 }

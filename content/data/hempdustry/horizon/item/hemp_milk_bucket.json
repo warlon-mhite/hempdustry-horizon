@@ -3,10 +3,6 @@
   "max_stack_size": 1,
   "crafting_remainder": "minecraft:bucket",
   "components": {
-    "minecraft:item_name": {
-      "translate": "item.hempdustry.hemp_milk_bucket"
-    },
-    "minecraft:item_model": "hempdustry:hemp_milk_bucket",
     "minecraft:consumable": {
       "animation": "drink",
       "sound": "minecraft:entity.generic.drink",
@@ -16,6 +12,10 @@
           "type": "minecraft:clear_all_effects"
         }
       ]
+    },
+    "minecraft:item_model": "hempdustry:hemp_milk_bucket",
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.hemp_milk_bucket"
     },
     "minecraft:use_remainder": {
       "id": "minecraft:bucket"

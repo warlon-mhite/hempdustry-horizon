@@ -2,10 +2,10 @@
   "template": "minecraft:stick",
   "max_stack_size": 16,
   "components": {
+    "minecraft:item_model": "hempdustry:spliff",
     "minecraft:item_name": {
       "translate": "item.hempdustry.spliff"
     },
-    "minecraft:item_model": "hempdustry:spliff",
     "!minecraft:cooking_fuel": {}
   }
 }

@@ -1,16 +1,16 @@
 {
   "template": "minecraft:stick",
   "components": {
-    "minecraft:item_name": {
-      "translate": "item.hempdustry.retted_hemp_stem"
+    "minecraft:compostable": {
+      "layers": "hempdustry:compostable/chance_50"
     },
-    "minecraft:item_model": "hempdustry:retted_hemp_stem",
     "minecraft:cooking_fuel": {
       "burn_time": "hempdustry:cooking/time_50",
       "speed_multiplier": "minecraft:cooking/speed_default"
     },
-    "minecraft:compostable": {
-      "layers": "hempdustry:compostable/chance_50"
+    "minecraft:item_model": "hempdustry:retted_hemp_stem",
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.retted_hemp_stem"
     }
   }
 }

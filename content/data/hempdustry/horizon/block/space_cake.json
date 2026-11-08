@@ -103,10 +103,10 @@
     ]
   },
   "components": {
+    "minecraft:item_model": "hempdustry:space_cake",
     "minecraft:item_name": {
       "translate": "block.hempdustry.space_cake"
     },
-    "minecraft:item_model": "hempdustry:space_cake",
     "!minecraft:compostable": {}
   }
 }

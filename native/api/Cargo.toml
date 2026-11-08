@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 # The launcher points this at the Horizon source it builds the game from. Any other
 # dependency must be a crate and version in Horizon's Cargo.lock.
-horizon-client = { git = "https://github.com/horizon-rust/horizon", rev = "2ebf00a0281c592f79191e76fce0e7d522c6f425" }
+horizon-client = { git = "https://github.com/horizon-rust/horizon", rev = "fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca" }
 # The advancement conditions Horizon hands a criterion test (in Horizon's Cargo.lock).
 serde_json = "1.0.151"
 

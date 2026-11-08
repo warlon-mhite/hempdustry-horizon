@@ -3,10 +3,10 @@
   "max_stack_size": 1,
   "rarity": "uncommon",
   "components": {
+    "minecraft:item_model": "hempdustry:music_disc_robadob",
     "minecraft:item_name": {
       "translate": "item.hempdustry.music_disc_robadob"
     },
-    "minecraft:item_model": "hempdustry:music_disc_robadob",
     "minecraft:jukebox_playable": "hempdustry:robadob",
     "!minecraft:cooking_fuel": {}
   }

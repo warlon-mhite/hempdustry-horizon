@@ -4,10 +4,10 @@
     "map_color": 0
   },
   "components": {
+    "minecraft:item_model": "hempdustry:hemp_planks_trapdoor",
     "minecraft:item_name": {
       "translate": "block.hempdustry.hemp_planks_trapdoor"
     },
-    "minecraft:item_model": "hempdustry:hemp_planks_trapdoor",
     "!minecraft:cooking_fuel": {}
   }
 }

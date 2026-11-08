@@ -4,10 +4,10 @@
     "map_color": 0
   },
   "components": {
+    "minecraft:item_model": "hempdustry:hemp_planks_slab",
     "minecraft:item_name": {
       "translate": "block.hempdustry.hemp_planks_slab"
     },
-    "minecraft:item_model": "hempdustry:hemp_planks_slab",
     "!minecraft:cooking_fuel": {}
   }
 }

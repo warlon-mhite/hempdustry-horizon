@@ -4,12 +4,12 @@
     "map_color": 0
   },
   "components": {
-    "minecraft:item_name": {
-      "translate": "block.hempdustry.hempcrete_powder_block"
-    },
-    "minecraft:item_model": "hempdustry:hempcrete_powder_block",
     "minecraft:compostable": {
       "layers": "hempdustry:compostable/chance_85"
+    },
+    "minecraft:item_model": "hempdustry:hempcrete_powder_block",
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.hempcrete_powder_block"
     }
   }
 }

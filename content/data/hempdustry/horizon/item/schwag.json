@@ -1,12 +1,12 @@
 {
   "template": "minecraft:stick",
   "components": {
-    "minecraft:item_name": {
-      "translate": "item.hempdustry.schwag"
-    },
-    "minecraft:item_model": "hempdustry:schwag",
     "minecraft:compostable": {
       "layers": "hempdustry:compostable/chance_50"
+    },
+    "minecraft:item_model": "hempdustry:schwag",
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.schwag"
     },
     "!minecraft:cooking_fuel": {}
   }

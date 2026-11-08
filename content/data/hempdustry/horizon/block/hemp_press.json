@@ -301,10 +301,10 @@
     ]
   },
   "components": {
+    "minecraft:item_model": "hempdustry:hemp_press",
     "minecraft:item_name": {
       "translate": "block.hempdustry.hemp_press"
     },
-    "minecraft:item_model": "hempdustry:hemp_press",
     "!minecraft:container": {}
   }
 }

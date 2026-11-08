@@ -21,17 +21,19 @@ mod states;
 use std::sync::{Mutex, OnceLock, PoisonError};
 
 use horizon_client::mod_api::{
-    AddServerReloadListenersEvent, BlockEntityContainerEvent, BlockEntityEvent,
+    AddServerReloadListenersEvent, AnalogOutputEvent, BlockEntityContainerEvent, BlockEntityEvent,
     BlockEntityTickEvent, BlockEntityTicksEvent, CanSurviveEvent, ComponentTypesEvent, Compound,
-    ContainerAcceptsEvent, DestroyBlockEvent, Flow, Hooks, Host, InventoryTickEvent,
-    IsBonemealSuccessEvent, IsValidBonemealTargetEvent, ItemModelPropertyEvent, ItemStack,
-    LevelDimension, LevelHost, LevelRandomHost, LevelTickPostEvent, LevelWriteHost,
-    LivingEntityUseItemFinishEvent, LivingEntityUseItemStartEvent, LootFunctionEvent,
-    LootTableLoadEvent, MayPlaceOnEvent, MenuQuickMoveEvent, MenuSlotRulesEvent, ModContainer,
-    ModifyDefaultComponentsEvent, NativeScreen, OnUseTickEvent, PerformBonemealEvent,
-    PlayerRespawnedEvent, RandomSource, RandomTickEvent, ScreenDrawEvent, ScreenEvent,
-    ServerReloadListenerApplyEvent, ServerTickEvent, TickEvent, TooltipEvent, UseAnimationEvent,
-    UseDurationEvent, UseItemEvent, UseItemOnEvent,
+    ContainerAcceptsEvent, DestroyBlockEvent, DispenseItemEvent, Flow, HasAnalogOutputEvent, Hooks,
+    Host, InventoryTickEvent, IsBonemealSuccessEvent, IsValidBonemealTargetEvent,
+    ItemModelPropertyEvent, ItemStack, LevelDimension, LevelHost, LevelRandomHost,
+    LevelTickPostEvent, LevelWriteHost, LivingEntityUseItemFinishEvent,
+    LivingEntityUseItemStartEvent, LootDropsEvent, LootFunctionEvent, LootTableLoadEvent,
+    MayPlaceOnEvent, MenuQuickMoveEvent, MenuSlotRulesEvent, ModContainer,
+    ModifyDefaultComponentsEvent, NativeDispensed, NativeScreen, OnUseTickEvent,
+    PerformBonemealEvent, PlayerRespawnedEvent, RandomSource, RandomTickEvent,
+    RightClickBlockV2Event, ScreenDrawEvent, ScreenEvent, ServerReloadListenerApplyEvent,
+    ServerTickEvent, TickEvent, TooltipEvent, UseAnimationEvent, UseDurationEvent, UseItemEvent,
+    UseItemOnEvent,
 };
 
 use farm::harvest;
@@ -302,6 +304,7 @@ impl Hooks for Hempdustry {
     /// A player breaking any block of a plant takes it whole, yielding once; breaking a bed takes
     /// the plant on it first. The game then breaks the block itself as usual.
     fn destroy_block(&self, host: &mut dyn Host, event: &mut DestroyBlockEvent) -> Flow {
+        self.machines.infuser_destroyed(host, event);
         let Some(states) = self.states.get() else {
             return Flow::Continue;
         };
@@ -468,5 +471,35 @@ impl Hooks for Hempdustry {
 
     fn screen_draw(&self, host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         machines::Machines::screen_draw(host, event);
+    }
+
+    // The Infuser's pour, by hand or by a dispenser, its spill when exploded, and its comparator.
+
+    fn right_click_block_v2(
+        &self,
+        host: &mut dyn Host,
+        event: &mut RightClickBlockV2Event,
+    ) -> Flow {
+        self.machines.infuser_right_click(host, event)
+    }
+
+    fn dispense_item(
+        &self,
+        host: &mut dyn Host,
+        event: &mut DispenseItemEvent<'_>,
+    ) -> Option<NativeDispensed> {
+        self.machines.infuser_dispense(host, event)
+    }
+
+    fn loot_drops(&self, host: &mut dyn Host, event: &mut LootDropsEvent<'_>) {
+        self.machines.infuser_exploded(host, event);
+    }
+
+    fn has_analog_output(&self, level: &dyn LevelHost, event: &mut HasAnalogOutputEvent) {
+        machines::Machines::infuser_has_analog_output(level, event);
+    }
+
+    fn analog_output(&self, level: &dyn LevelHost, event: &mut AnalogOutputEvent) {
+        self.machines.infuser_analog_output(level, event);
     }
 }

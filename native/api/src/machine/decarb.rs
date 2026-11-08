@@ -202,42 +202,6 @@ pub fn quick_move_slots(stack: &ItemStack, kitchen: &dyn Kitchen) -> Option<Rang
     }
 }
 
-/// `AbstractContainerMenu.moveItemStackTo` into `range`, front to back: first onto stacks of the
-/// same item, then into empty slots. Takes what it moves out of `stack`; returns whether any moved.
-pub fn move_into(
-    slots: &mut [Option<ItemStack>],
-    range: Range<usize>,
-    stack: &mut ItemStack,
-    kitchen: &dyn Kitchen,
-) -> bool {
-    let start = stack.count;
-    let max = kitchen.max_stack(stack);
-    for slot in range.clone() {
-        if stack.count == 0 {
-            break;
-        }
-        if let Some(here) = slots[slot].as_mut()
-            && here.same_item_same_components(stack)
-        {
-            let room = max.saturating_sub(here.count).min(stack.count);
-            here.count += room;
-            stack.count -= room;
-        }
-    }
-    for slot in range {
-        if stack.count == 0 {
-            break;
-        }
-        if slots[slot].is_none() {
-            let mut placed = stack.clone();
-            placed.count = stack.count.min(max);
-            stack.count -= placed.count;
-            slots[slot] = Some(placed);
-        }
-    }
-    stack.count < start
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -405,28 +369,6 @@ mod tests {
         assert_eq!(quick_move_slots(&bud, &Shipped), Some(1..4));
         assert_eq!(quick_move_slots(&coal, &Shipped), Some(0..1));
         assert_eq!(quick_move_slots(&dirt, &Shipped), None);
-    }
-
-    #[test]
-    fn a_shift_click_tops_up_before_it_fills_an_empty_tray() {
-        let mut slots = [None, None, stack("hempdustry:indica_buds", 60), None, None];
-        let mut moving = ItemStack::new("hempdustry:indica_buds", 10);
-        assert!(move_into(&mut slots, 1..4, &mut moving, &Shipped));
-        assert_eq!(
-            [count(&slots, 1), count(&slots, 2), count(&slots, 3)],
-            [6, 64, 0]
-        );
-        assert_eq!(moving.count, 0);
-        let mut full = [
-            None,
-            stack("minecraft:dirt", 1),
-            stack("minecraft:dirt", 1),
-            stack("minecraft:dirt", 1),
-            None,
-        ];
-        let mut moving = ItemStack::new("hempdustry:indica_buds", 10);
-        assert!(!move_into(&mut full, 1..4, &mut moving, &Shipped));
-        assert_eq!(moving.count, 10);
     }
 
     #[test]

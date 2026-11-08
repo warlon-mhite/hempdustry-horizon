@@ -1,5 +1,6 @@
 //! The farming rules played on a small world of blocks, with the random's draws scripted.
 
+use std::borrow::Cow;
 use std::collections::{HashMap, HashSet, VecDeque};
 
 use super::interact::{self, Effect, Held};
@@ -417,7 +418,10 @@ fn a_bottle_on_the_plant_waters_its_pot() {
             watered: true
         })
     );
-    assert_eq!(actor.count(&Effect::EmptyHeld("minecraft:glass_bottle")), 1);
+    assert_eq!(
+        actor.count(&Effect::EmptyHeld(Cow::Borrowed("minecraft:glass_bottle"))),
+        1
+    );
 }
 
 #[test]
@@ -469,7 +473,10 @@ fn a_bucket_fills_a_tray_but_boils_away_in_the_nether() {
         false,
         &mut actor.effects
     ));
-    assert_eq!(actor.count(&Effect::EmptyHeld("minecraft:bucket")), 1);
+    assert_eq!(
+        actor.count(&Effect::EmptyHeld(Cow::Borrowed("minecraft:bucket"))),
+        1
+    );
 }
 
 #[test]

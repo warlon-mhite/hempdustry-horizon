@@ -354,6 +354,24 @@ impl HostWorld<'_> {
         fire(self.host, &test);
     }
 
+    /// Carries out a click's effects for the acting player ([`Hands::apply`]).
+    pub(crate) fn apply(&mut self, used: &ItemStack, effects: Vec<Effect>) {
+        Hands {
+            host: &mut *self.host,
+            dimension: self.dimension,
+        }
+        .apply(used, effects);
+    }
+}
+
+/// The acting player's hands, through the host: what a click's effects do to the stack it used,
+/// for the hooks with no level to hand (a machine's pour as much as a crop's trim).
+pub(crate) struct Hands<'a> {
+    pub host: &'a mut dyn Host,
+    pub dimension: &'a str,
+}
+
+impl Hands<'_> {
     /// The acting player's slot holding `used`, the stack a click used, in
     /// [`Host::carried_stack`]'s numbers: the main hand's hotbar slot, else the off hand. The
     /// player's own slots, because their entity handle isn't found while their turn runs. The
@@ -386,7 +404,7 @@ impl HostWorld<'_> {
                         held = held.and_then(|stack| fewer(stack, 1));
                     }
                     match &held {
-                        None => held = Some(plain(item, 1)),
+                        None => held = Some(plain(&item, 1)),
                         Some(_) => give.push(item),
                     }
                 }
@@ -446,11 +464,11 @@ impl HostWorld<'_> {
             }
         }
         for item in give {
-            if creative && self.host.count_items(item) > 0 {
+            if creative && self.host.count_items(&item) > 0 {
                 continue;
             }
-            if self.host.give_items(item, 1) == 0 {
-                self.drop_item(player_block(player.position), item, 1);
+            if self.host.give_items(&item, 1) == 0 {
+                self.drop_item(player_block(player.position), &item, 1);
             }
         }
     }

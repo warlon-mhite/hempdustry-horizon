@@ -9,7 +9,7 @@ the Java repository, and its behaviour written again in Rust.
 | Part | What | Status |
 |---|---|---|
 | Content (`.hmod`) | Every block, item, recipe, loot table, tag, advancement, model, texture, sound and translation | Builds; every block places and draws |
-| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Farming, smoking and the Decarboxylator (`native/`): unit-tested, and played in a game on Horizon `2ebf00a` |
+| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Farming, smoking, the Decarboxylator and the Infuser (`native/`): unit-tested, and played in a game on Horizon `2ebf00a` |
 
 ## How it is built
 
@@ -67,7 +67,15 @@ state, shift-clicks, its own screen with the flame and the three arrows, and its
 when broken. Worlds keep its block data in the Java mod's keys. Horizon resolves only Minecraft's
 own burn-time references, so the native mod writes the mod's fuel times out: hemp burns in a
 vanilla furnace too. Still to come here: the oven's crackle and smoke, an anvil name on its screen,
-the Infuser, the Hemp Press and the Sifting Box.
+the Hemp Press and the Sifting Box.
+
+The Infuser, played in a game: heat from the block below (a campfire, a lit furnace or oven, magma,
+lava), milk poured by hand or by a dispenser with the empty handed back, hemp fed by hand or by
+hoppers and dissolved one at a time through the loading window, the cannabutter previewed from the
+minimum with its strength and grade, the grade climbing with the simmer, the spout pouring a batch
+into the container it faces once it can get no better, the comparator reading the batch's
+progress, its screen with the bar, the two marks, the milk and the flame, and a broken tub giving
+back its dissolved hemp but never the butter. Still to come: its bubbles, steam and simmer sound.
 
 ## Licence
 

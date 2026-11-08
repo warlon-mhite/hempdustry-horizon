@@ -5,6 +5,8 @@
 //! The world changes as the click is played; what it does to the player and around them comes
 //! back as a list of [`Effect`]s for the game to carry out.
 
+use std::borrow::Cow;
+
 use super::medium::Medium;
 use super::mildew;
 use super::model::{Block, Condition, Mildew, Plant, Pos, Pot, Tray, above};
@@ -33,8 +35,8 @@ pub enum Effect {
     /// One of the held stack used up.
     ConsumeHeld,
     /// The held stack emptied (`ItemUtils.createFilledResult`): a water bottle into a glass
-    /// bottle, a water bucket into a bucket.
-    EmptyHeld(&'static str),
+    /// bottle, a water bucket into a bucket, a milk into what it leaves.
+    EmptyHeld(Cow<'static, str>),
     /// `count` of `item` dropped at `pos` (`Block.popResource`).
     Drop {
         pos: Pos,
@@ -212,7 +214,7 @@ fn water_pot(world: &mut dyn World, pos: Pos, out: &mut Vec<Effect>) -> bool {
         pitch: 1.0,
     });
     out.push(Effect::Splash(pos));
-    out.push(Effect::EmptyHeld("minecraft:glass_bottle"));
+    out.push(Effect::EmptyHeld(Cow::Borrowed("minecraft:glass_bottle")));
     true
 }
 
@@ -257,7 +259,7 @@ fn use_on_tray(
                 volume: 1.0,
                 pitch: 1.0,
             });
-            out.push(Effect::EmptyHeld("minecraft:bucket"));
+            out.push(Effect::EmptyHeld(Cow::Borrowed("minecraft:bucket")));
             true
         }
         // A full tray refuses the bucket by taking the click and doing nothing.

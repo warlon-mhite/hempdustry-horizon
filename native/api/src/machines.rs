@@ -1,5 +1,6 @@
 //! The machines ([`crate::machine`]) wired to Horizon: each one's block entity, its container and
-//! hopper faces, its tick, its menu's slot rules and shift-clicks, and its screen.
+//! hopper faces, its tick, its menu's slot rules and shift-clicks, and its screen: the
+//! Decarboxylator here, the Infuser in [`infuser`].
 //!
 //! Burn times: a native mod can't ask Horizon how long an item burns, so the items' default
 //! components are read as Horizon loads them (`modify_default_components`) and the burn-time
@@ -19,6 +20,9 @@ use horizon_client::mod_api::{
     ModifyDefaultComponentsEvent, NativeReloadListener, NativeScreen, ScreenDrawEvent, ScreenEvent,
     ServerReloadListenerApplyEvent, Tag,
 };
+use infuser::INFUSER;
+
+pub(crate) mod infuser;
 
 /// The Decarboxylator: its block, its block entity type and its menu type share the id.
 pub(crate) const DECARBOXYLATOR: &str = "hempdustry:decarboxylator";
@@ -65,6 +69,8 @@ pub(crate) struct Machines {
     items: RwLock<HashMap<String, ItemFacts>>,
     providers: RwLock<Arc<Providers>>,
     recipes: RwLock<Arc<Recipes>>,
+    infusing: RwLock<Arc<infuser::Recipes>>,
+    tubs: RwLock<infuser::Tubs>,
 }
 
 /// The game's answers, as the oven asks them.
@@ -185,6 +191,9 @@ impl Machines {
     }
 
     pub(crate) fn block_entity(event: &BlockEntityEvent<'_>) -> Option<(String, Compound)> {
+        if infuser::is_infuser(event.block) {
+            return Some(Self::infuser_block_entity());
+        }
         (block_id(event.block) == DECARBOXYLATOR).then(|| {
             let mut nbt = Compound::new();
             save(&mut nbt, &Oven::default());
@@ -193,7 +202,7 @@ impl Machines {
     }
 
     pub(crate) fn block_entity_ticks(event: &mut BlockEntityTicksEvent<'_>) {
-        if block_id(event.block) == DECARBOXYLATOR {
+        if block_id(event.block) == DECARBOXYLATOR || infuser::is_infuser(event.block) {
             event.ticks = true;
         }
     }
@@ -205,6 +214,9 @@ impl Machines {
         event: &BlockEntityContainerEvent<'_>,
     ) -> Option<ModContainer> {
         use decarb::{FUEL_SLOT, OUTPUT_SLOT, SLOT_COUNT};
+        if infuser::is_infuser(event.block) {
+            return Some(Self::infuser_container());
+        }
         (block_id(event.block) == DECARBOXYLATOR).then(|| {
             let trays: Vec<usize> = decarb::TRAYS.collect();
             let side = vec![FUEL_SLOT];
@@ -231,6 +243,10 @@ impl Machines {
         host: &mut dyn Host,
         event: &mut BlockEntityTickEvent<'_>,
     ) {
+        if event.entity.id == INFUSER {
+            self.tick_infuser(host, event);
+            return;
+        }
         if event.entity.id != DECARBOXYLATOR {
             return;
         }
@@ -256,6 +272,10 @@ impl Machines {
     /// `Slot.mayPlace` in the oven's menu: no level is at hand, so the recipes and fuels are the
     /// ones the last tick and data load read.
     pub(crate) fn menu_slot_rules(&self, event: &mut MenuSlotRulesEvent<'_>) {
+        if event.menu == INFUSER {
+            self.infuser_slot_rules(event);
+            return;
+        }
         if event.menu == DECARBOXYLATOR && event.slot < decarb::SLOT_COUNT {
             event.may_place =
                 self.with_kitchen(|kitchen| decarb::accepts(event.slot, event.stack, kitchen));
@@ -264,6 +284,13 @@ impl Machines {
 
     /// A hopper or dropper puts only what belongs in a slot (`canPlaceItemThroughFace`).
     pub(crate) fn container_accepts(&self, event: &ContainerAcceptsEvent<'_>) -> Flow {
+        if event.entity.id == INFUSER {
+            return if self.infuser_accepts(event) {
+                Flow::Continue
+            } else {
+                Flow::Cancel
+            };
+        }
         if event.entity.id != DECARBOXYLATOR
             || self.with_kitchen(|kitchen| decarb::accepts(event.slot, event.stack, kitchen))
         {
@@ -280,6 +307,9 @@ impl Machines {
         host: &dyn Host,
         event: &mut MenuQuickMoveEvent<'_>,
     ) -> Flow {
+        if event.entity.id == INFUSER {
+            return self.infuser_quick_move(host, event);
+        }
         if event.entity.id != DECARBOXYLATOR || event.slot < event.container_slots {
             return Flow::Continue;
         }
@@ -290,7 +320,8 @@ impl Machines {
             };
             let mut slots = event.entity.items.clone();
             slots.resize(decarb::SLOT_COUNT, None);
-            let moved = decarb::move_into(&mut slots, range, event.stack, kitchen);
+            let max = kitchen.max_stack(event.stack);
+            let moved = crate::machine::move_into(&mut slots, range, event.stack, max);
             if moved {
                 event.entity.items = slots;
             }
@@ -300,6 +331,9 @@ impl Machines {
     }
 
     pub(crate) fn screen(event: &ScreenEvent<'_>) -> Option<NativeScreen> {
+        if infuser::is_infuser(event.block) {
+            return Some(Self::infuser_screen());
+        }
         (block_id(event.block) == DECARBOXYLATOR).then(|| NativeScreen {
             width: PANEL[0],
             height: PANEL[1],
@@ -314,6 +348,10 @@ impl Machines {
     /// `DecarboxylatorScreen`: the panel, the flame burning down from the top, and each tray's
     /// arrow filling on its own clock, no numbers (vanilla's furnace convention).
     pub(crate) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
+        if infuser::is_infuser(event.block) {
+            Self::infuser_screen_draw(host, event);
+            return;
+        }
         if block_id(event.block) != DECARBOXYLATOR {
             return;
         }

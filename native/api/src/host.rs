@@ -195,6 +195,15 @@ impl World for HostWorld<'_> {
             return LightSource::NONE;
         };
         let state = StateText::parse(&text);
+        // Air and our plants, nearly all a field's scan meets, are neither a light nor opaque:
+        // answered before the collision box and tag lookups the other blocks need.
+        if matches!(
+            state.name,
+            "minecraft:air" | "minecraft:cave_air" | "minecraft:void_air"
+        ) || Kind::from_block(state.name).is_some()
+        {
+            return LightSource::NONE;
+        }
         let opaque = self.opaque(pos, state.name);
         let lit = state.get("lit");
         let tier = if self.in_tag(state.name, "hempdustry:grow_lamps") {

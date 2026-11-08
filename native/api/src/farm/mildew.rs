@@ -35,6 +35,11 @@ pub fn random_tick(world: &mut dyn World, lower: Pos) {
         }
         return;
     }
+    // Under a roof only gas or a mildewed plant changes anything, so a clean field skips the roof
+    // check, a heightmap read and the dearest part of this tick. No random is drawn before.
+    if now != Mildew::Mildewed && !world.gassed(lower) {
+        return;
+    }
     if !world.roofed(lower) {
         return;
     }

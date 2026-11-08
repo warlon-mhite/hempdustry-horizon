@@ -4,6 +4,10 @@
 use super::data::{Category, Effect};
 
 /// `HempdustryConfig.Effects`.
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "the switches of `HempdustryConfig.Effects`, one for one"
+)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Policy {
     pub enabled: bool,
@@ -71,7 +75,10 @@ impl Policy {
     }
 
     /// `EffectPolicy.duration`.
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "Java's `(int) Math.round`: its ties go up where `round` goes away from zero, which differs only below zero, where both clamp"
+    )]
     #[must_use]
     pub fn duration(&self, ticks: i32) -> i32 {
         (f64::from(ticks) * self.duration_multiplier)
@@ -97,7 +104,10 @@ impl Policy {
     }
 
     /// `EffectPolicy.cooldown`.
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "Java's `(int) Math.round`: its ties go up where `round` goes away from zero, which differs only below zero, where both clamp"
+    )]
     #[must_use]
     pub fn cooldown(&self, ticks: i32) -> i32 {
         (f64::from(ticks) * self.cooldown_multiplier)
@@ -106,7 +116,10 @@ impl Policy {
     }
 
     /// `EffectPolicy.greenOutChanceOneIn`: 0 (never) when the config rules it out.
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "Java's `(int) Math.round`: its ties go up where `round` goes away from zero, which differs only below zero, where both clamp"
+    )]
     #[must_use]
     pub fn green_out_one_in(&self, one_in: i32) -> i32 {
         if one_in <= 0

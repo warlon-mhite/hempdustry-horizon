@@ -129,6 +129,7 @@ impl Medium {
 }
 
 #[cfg(test)]
+#[expect(clippy::float_cmp, reason = "the rules return these constants exactly")]
 mod tests {
     use super::*;
 

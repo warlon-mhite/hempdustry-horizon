@@ -16,10 +16,10 @@ use crate::farm::model::Plant;
 use crate::host::StateText;
 
 /// The trigger's id, as the advancement files name it.
-pub const HARVEST_HEMP: &str = "hempdustry:harvest_hemp";
+pub(crate) const HARVEST_HEMP: &str = "hempdustry:harvest_hemp";
 
 /// One harvest, as the criterion's conditions read it.
-pub struct HarvestTest<'a> {
+pub(crate) struct HarvestTest<'a> {
     pub cuts: u8,
     /// The `condition` the plant kept.
     pub condition: &'static str,
@@ -32,7 +32,7 @@ pub struct HarvestTest<'a> {
 
 impl<'a> HarvestTest<'a> {
     #[must_use]
-    pub fn new(plant: &Plant, bed: StateText<'a>) -> Self {
+    pub(crate) fn new(plant: Plant, bed: StateText<'a>) -> Self {
         Self {
             cuts: plant.cut_count(),
             condition: plant.condition.name(),
@@ -44,7 +44,7 @@ impl<'a> HarvestTest<'a> {
 
     /// `HarvestHempCriterion.Conditions.matches`: every filter present must pass.
     #[must_use]
-    pub fn matches(&self, conditions: &Value) -> bool {
+    pub(crate) fn matches(&self, conditions: &Value) -> bool {
         ints_match(&conditions["cuts"], i64::from(self.cuts))
             && conditions["condition"]
                 .as_str()
@@ -53,7 +53,7 @@ impl<'a> HarvestTest<'a> {
     }
 
     /// The tags a test asked about that weren't looked up, each once; emptied by the call.
-    pub fn missing(&self) -> Vec<String> {
+    pub(crate) fn missing(&self) -> Vec<String> {
         std::mem::take(&mut *self.missing.borrow_mut())
     }
 
@@ -161,20 +161,20 @@ mod tests {
     #[test]
     fn top_shelf_wants_both_cuts_a_grow_lamp_and_a_tray() {
         let top_shelf = json!({"bed": {"blocks": "hempdustry:hydro_tray"}, "condition": "grow_lamp", "cuts": 2});
-        assert!(HarvestTest::new(&ripe(), StateText::parse(TRAY)).matches(&top_shelf));
+        assert!(HarvestTest::new(ripe(), StateText::parse(TRAY)).matches(&top_shelf));
 
         let mut once = ripe();
         once.trimmed_late = false;
-        assert!(!HarvestTest::new(&once, StateText::parse(TRAY)).matches(&top_shelf));
+        assert!(!HarvestTest::new(once, StateText::parse(TRAY)).matches(&top_shelf));
 
         let pot = StateText::parse("hempdustry:grow_pot[fertility=0,watered=false]");
-        assert!(!HarvestTest::new(&ripe(), pot).matches(&top_shelf));
+        assert!(!HarvestTest::new(ripe(), pot).matches(&top_shelf));
     }
 
     #[test]
     fn no_conditions_match_every_harvest() {
         let test = HarvestTest::new(
-            &Plant::new(Kind::Sativa, 7, Segment::Lower),
+            Plant::new(Kind::Sativa, 7, Segment::Lower),
             StateText::parse("minecraft:farmland[moisture=7]"),
         );
         assert!(test.matches(&Value::Null));
@@ -183,14 +183,14 @@ mod tests {
 
     #[test]
     fn cuts_take_a_range() {
-        let test = HarvestTest::new(&ripe(), StateText::parse(TRAY));
+        let test = HarvestTest::new(ripe(), StateText::parse(TRAY));
         assert!(test.matches(&json!({"cuts": {"min": 1}})));
         assert!(!test.matches(&json!({"cuts": {"max": 1}})));
     }
 
     #[test]
     fn the_bed_state_is_compared_value_by_value() {
-        let test = HarvestTest::new(&ripe(), StateText::parse(TRAY));
+        let test = HarvestTest::new(ripe(), StateText::parse(TRAY));
         assert!(test.matches(&json!({"bed": {"blocks": ["hempdustry:grow_pot", "hempdustry:hydro_tray"], "state": {"fed": "true"}}})));
         assert!(!test.matches(&json!({"bed": {"state": {"fed": "false"}}})));
         assert!(test.matches(&json!({"bed": {"state": {"level": {"min": "1", "max": "3"}}}})));
@@ -199,7 +199,7 @@ mod tests {
     #[test]
     fn a_bed_tag_is_asked_for_then_answered() {
         let wants_tag = json!({"bed": {"blocks": "#hempdustry:grow_media"}});
-        let mut test = HarvestTest::new(&ripe(), StateText::parse(TRAY));
+        let mut test = HarvestTest::new(ripe(), StateText::parse(TRAY));
         assert!(
             !test.matches(&wants_tag),
             "unknown tags answer no on the first pass"

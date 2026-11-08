@@ -3,7 +3,7 @@
 //! the cooldown, and what is left of the device.
 
 use super::contents::SmokeContents;
-use super::data::{Catalog, Category, Effect, java_round};
+use super::data::{Catalog, Category, Effect, java_float, java_round};
 use super::device::Device;
 use super::policy::Policy;
 
@@ -178,7 +178,7 @@ fn green_out_chance(base: i32, device_factor: f32) -> i32 {
     if base <= 0 || device_factor <= 0.0 {
         return 0;
     }
-    java_round(base as f32 * device_factor).max(1)
+    java_round(java_float(base) * device_factor).max(1)
 }
 
 /// `smoothed` / `harshened`: odds of one in `odds` scaled by the primary strain's factor; a
@@ -193,7 +193,7 @@ fn scaled(odds: i32, factor: Option<f32>) -> i32 {
     if factor <= 0.0 {
         return 0;
     }
-    java_round(odds as f32 * factor).max(1)
+    java_round(java_float(odds) * factor).max(1)
 }
 
 /// `Smoking.easedByOutfit`: the whole outfit doubles the odds against.
@@ -278,8 +278,7 @@ fn unbroken_points(points: u32, unbreaking: i32, dice: &mut dyn Dice) -> u32 {
     if unbreaking <= 0 {
         return points;
     }
-    #[allow(clippy::cast_precision_loss)]
-    let chance = unbreaking as f32 / (unbreaking + 1) as f32;
+    let chance = java_float(unbreaking) / java_float(unbreaking + 1);
     let removed = (0..points).filter(|_| dice.next_float() < chance).count();
     points - u32::try_from(removed).unwrap_or(points)
 }

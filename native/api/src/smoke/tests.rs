@@ -1,5 +1,9 @@
 //! The smoking rules against the numbers the Java mod's balance table states (durations,
 //! levels, green-out odds, wear), with the strains as the Java data files write them.
+#![expect(
+    clippy::unreadable_literal,
+    reason = "colours copied as the Java data files write them"
+)]
 
 use serde_json::json;
 

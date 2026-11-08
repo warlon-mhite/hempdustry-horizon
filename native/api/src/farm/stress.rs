@@ -51,7 +51,7 @@ pub fn after_step(
 
 /// The odds a bone meal step on `plant` (at `lower`) overfeeds it: flowering already, in a fed bed.
 #[must_use]
-pub fn of_bone_meal(world: &dyn World, lower: Pos, plant: &Plant) -> f32 {
+pub fn of_bone_meal(world: &dyn World, lower: Pos, plant: Plant) -> f32 {
     let fed = Medium::of(world.block(above(lower, -1))).is_some_and(Medium::fed);
     if plant.is_flowering() && fed {
         OVERFED

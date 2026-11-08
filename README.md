@@ -37,9 +37,11 @@ mod's farming rules as plain Rust with no Horizon types (growth, light records, 
 Grow Pot and Hydro Tray, trimming, bone meal, harvesting), and `native/api/src/smoke/` its smoking
 rules (strains, devices and the green-out read from the same data files, a hit, the exhale, wear),
 tested on their own with `cargo test` in `native/api`; the rest of the crate wires them to
-Horizon's hooks. Building it into a game is `horizon-launcher native-build native --instance
-<instance> --trust-native-code`, which compiles Horizon with the mod linked in: trusting native code
-is the player's decision.
+Horizon's hooks. `cargo clippy --all-targets` passes clean under the lint table in
+`native/api/Cargo.toml` (pedantic, no `unsafe`, no `unwrap` outside tests); a lint broken on
+purpose is answered on the spot with `#[expect(…, reason = "…")]`. Building it into a game is
+`horizon-launcher native-build native --instance <instance> --trust-native-code`, which compiles
+Horizon with the mod linked in: trusting native code is the player's decision.
 
 Played in a game: seeds, growth to two and three blocks and the height a roof leaves, bone meal,
 the Grow Pot and Hydro Tray (bottle, bucket, bone meal), both trims and the shears' wear, harvest

@@ -160,7 +160,7 @@ impl Strain {
             amplifier = amplifier.min(effect.max_amplifier);
             out.push(Effect {
                 id: effect.effect.clone(),
-                duration: java_round(duration_ticks as f32 * effect.duration_factor).max(1),
+                duration: java_round(java_float(duration_ticks) * effect.duration_factor).max(1),
                 amplifier,
             });
         }
@@ -424,19 +424,42 @@ fn int(value: &Value) -> Option<i32> {
     value.as_i64().and_then(|n| i32::try_from(n).ok())
 }
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "the Java codecs read these fields as floats"
+)]
 fn float(value: &Value) -> Option<f32> {
     value.as_f64().map(|f| f as f32)
 }
 
-/// `Math.round(float)`: half up, toward positive infinity.
-#[allow(clippy::cast_possible_truncation)]
+/// Java's `(float)` of an int: the nearest f32 (exact up to 2^24, which ticks and odds stay
+/// far below).
+#[expect(
+    clippy::cast_precision_loss,
+    reason = "the same rounding as Java's `(float)`"
+)]
+#[must_use]
+pub const fn java_float(value: i32) -> f32 {
+    value as f32
+}
+
+/// `Math.round(float)`: the nearest int, a tie toward positive infinity, NaN as 0 and the
+/// ends saturated. The half is added in f64, where it is exact: in f32 the sum can round up
+/// first (Java's `Math.round(0.49999997f)` is 0).
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "saturating, and NaN as 0, as `Math.round` does"
+)]
 #[must_use]
 pub fn java_round(value: f32) -> i32 {
-    (value + 0.5).floor() as i32
+    (f64::from(value) + 0.5).floor() as i32
 }
 
 #[cfg(test)]
+#[expect(
+    clippy::unreadable_literal,
+    reason = "colours copied as the Java data files write them"
+)]
 mod tests {
     use super::*;
     use serde_json::json;
@@ -465,6 +488,17 @@ mod tests {
             }
             assert!(Strain::parse("x:y", &file).is_none(), "{missing}");
         }
+    }
+
+    /// `Math.round(float)`'s results as the Java docs define them: nearest, ties up.
+    #[test]
+    fn java_round_matches_math_round_at_its_edges() {
+        assert_eq!(java_round(2.5), 3);
+        assert_eq!(java_round(-2.5), -2);
+        assert_eq!(java_round(0.499_999_97), 0);
+        assert_eq!(java_round(8_388_609.0), 8_388_609);
+        assert_eq!(java_round(f32::NAN), 0);
+        assert_eq!(java_round(3.0e9), i32::MAX);
     }
 
     #[test]

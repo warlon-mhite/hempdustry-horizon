@@ -39,6 +39,7 @@ use level::LevelWorld;
 use states::{Defaults, States};
 
 /// The game calls this once, at start.
+#[must_use]
 pub fn hooks() -> Box<dyn Hooks> {
     Box::new(Hempdustry::default())
 }
@@ -181,7 +182,7 @@ impl Hooks for Hempdustry {
         let plant = states.plant(event.state)?;
         let ground = states.block(event.ground);
         Some(plant::may_stand_on(
-            &plant,
+            plant,
             ground,
             states.is_soil(event.ground),
         ))
@@ -196,7 +197,7 @@ impl Hooks for Hempdustry {
             return None;
         }
         let below = level.block_state(above(pos_of(event.pos), -1));
-        Some(plant::may_stand_on(&plant, states.block(below), false))
+        Some(plant::may_stand_on(plant, states.block(below), false))
     }
 
     fn is_valid_bonemeal_target(
@@ -209,7 +210,7 @@ impl Hooks for Hempdustry {
         match states.block(event.state) {
             Block::Plant(plant) => {
                 let world = LevelWorld { level, states };
-                Some(plant::takes_bone_meal(&world, pos, &plant))
+                Some(plant::takes_bone_meal(&world, pos, plant))
             }
             block => Medium::of(block).map(|medium| medium.takes_food(boils_away(event.dimension))),
         }

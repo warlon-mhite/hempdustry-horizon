@@ -25,9 +25,9 @@ use crate::smoke::hit::{Dice, Hit, Rules, Smoker, Spent, Worn};
 use crate::smoke::name::{self, Labels, PackedName};
 use crate::smoke::{Catalog, Category, Device, Effect, Exhale, Policy, SmokeContents};
 
-pub const SMOKE_CONTENTS: &str = "hempdustry:smoke_contents";
-pub const CHARGES: &str = "hempdustry:charges";
-pub const COOLDOWN_UNTIL: &str = "hempdustry:cooldown_until";
+pub(crate) const SMOKE_CONTENTS: &str = "hempdustry:smoke_contents";
+pub(crate) const CHARGES: &str = "hempdustry:charges";
+pub(crate) const COOLDOWN_UNTIL: &str = "hempdustry:cooldown_until";
 
 /// Every data component the Java mod registers in code. Registered here so stacks carrying
 /// them load, save and draw as in Java (the item definitions of the bongs, pipe and vaporizer
@@ -80,7 +80,7 @@ struct Pending {
 }
 
 #[derive(Default)]
-pub struct Smoking {
+pub(crate) struct Smoking {
     catalog: RwLock<Arc<Catalog>>,
     /// Each player's cooldown end, in game ticks.
     cooldowns: Mutex<HashMap<u128, i64>>,
@@ -103,13 +103,13 @@ impl Smoking {
         Arc::clone(&self.catalog.read().unwrap_or_else(PoisonError::into_inner))
     }
 
-    pub fn component_types(event: &mut ComponentTypesEvent<'_>) {
+    pub(crate) fn component_types(event: &mut ComponentTypesEvent<'_>) {
         event
             .types
             .extend(COMPONENT_TYPES.iter().map(|&id| id.to_owned()));
     }
 
-    pub fn add_reload_listeners(event: &mut AddServerReloadListenersEvent<'_>) {
+    pub(crate) fn add_reload_listeners(event: &mut AddServerReloadListenersEvent<'_>) {
         for (id, folder) in [
             (STRAINS, "hempdustry/strain"),
             (DEVICES, "hempdustry/device"),
@@ -122,16 +122,17 @@ impl Smoking {
 
     /// A data load hands over one folder's files: the strains reload with `/reload` too,
     /// where the Java mod needs a restart.
-    pub fn reload(&self, event: &mut ServerReloadListenerApplyEvent<'_>) {
+    pub(crate) fn reload(&self, event: &ServerReloadListenerApplyEvent<'_>) {
+        let set: fn(&mut Catalog, &[(String, Value)]) = match event.listener.id.as_str() {
+            STRAINS => Catalog::set_strains,
+            DEVICES => Catalog::set_devices,
+            GREEN_OUT => Catalog::set_green_out,
+            EDIBLES => Catalog::set_edibles,
+            // Another mod's folder: no lock, and no copy of a catalog a hit still reads.
+            _ => return,
+        };
         let mut guard = self.catalog.write().unwrap_or_else(PoisonError::into_inner);
-        let catalog = Arc::make_mut(&mut guard);
-        match event.listener.id.as_str() {
-            STRAINS => catalog.set_strains(event.files),
-            DEVICES => catalog.set_devices(event.files),
-            GREEN_OUT => catalog.set_green_out(event.files),
-            EDIBLES => catalog.set_edibles(event.files),
-            _ => {}
-        }
+        set(Arc::make_mut(&mut guard), event.files);
     }
 
     /// What `stack` has loaded, its strains resolved against the data.
@@ -164,7 +165,7 @@ impl Smoking {
 
     /// `use`: the spliff, the pipe and the vaporizer hit on the click; the bong is drawn on
     /// over time and hits when the draw is done.
-    pub fn use_item(&self, host: &mut dyn Host, event: &mut UseItemEvent<'_>) -> Flow {
+    pub(crate) fn use_item(&self, host: &mut dyn Host, event: &UseItemEvent<'_>) -> Flow {
         let Some(device) = Device::of_item(&event.stack.item) else {
             return Flow::Continue;
         };
@@ -193,7 +194,7 @@ impl Smoking {
     }
 
     /// `getUseDuration`: a packed bong is drawn on for its draw time.
-    pub fn use_duration(host: &dyn Host, event: &mut UseDurationEvent<'_>) {
+    pub(crate) fn use_duration(host: &dyn Host, event: &mut UseDurationEvent<'_>) {
         if let Some(device) = Device::of_item(&event.stack.item)
             && device.draw_ticks() > 0
             && Self::looks_packed(host, event.stack)
@@ -205,7 +206,7 @@ impl Smoking {
     /// `hempdustry:has/<component>`: the build writes our item definitions' `has_component`
     /// conditions on a component of ours this way (Horizon reads that condition for vanilla's
     /// components only), and it holds as vanilla's would: the stack carries the component.
-    pub fn item_model_property(event: &mut ItemModelPropertyEvent<'_>) {
+    pub(crate) fn item_model_property(event: &mut ItemModelPropertyEvent<'_>) {
         if let Some(component) = event.property.strip_prefix("hempdustry:has/") {
             let id = format!("hempdustry:{component}");
             event.value = matches!(event.stack.patch.get(&id), Some(Some(_)));
@@ -216,7 +217,7 @@ impl Smoking {
     /// one is named for its load ("Purple Kush Bong III"), and a spliff or moon rock carrying
     /// hash says so under the name ("With Hashish", grey italic). A custom name wins, as in
     /// Java. Horizon has no item-name hook, so the name changes in the tooltip only.
-    pub fn tooltip(&self, host: &dyn Host, event: &mut TooltipEvent<'_>) {
+    pub(crate) fn tooltip(&self, host: &dyn Host, event: &mut TooltipEvent<'_>) {
         let stack = event.stack;
         // Asked every frame for every hovered stack: leave others' items before any lookup.
         if !stack.item.starts_with("hempdustry:") {
@@ -245,7 +246,7 @@ impl Smoking {
     }
 
     /// `getUseAnimation`: drawn on like a goat horn.
-    pub fn use_animation(host: &dyn Host, event: &mut UseAnimationEvent<'_>) {
+    pub(crate) fn use_animation(host: &dyn Host, event: &mut UseAnimationEvent<'_>) {
         if let Some(device) = Device::of_item(&event.stack.item)
             && device.draw_ticks() > 0
             && Self::looks_packed(host, event.stack)
@@ -255,10 +256,10 @@ impl Smoking {
     }
 
     /// No draw while every smokeable cools down, or from a load the data doesn't know.
-    pub fn use_start(
+    pub(crate) fn use_start(
         &self,
-        host: &mut dyn Host,
-        event: &mut LivingEntityUseItemStartEvent<'_>,
+        host: &dyn Host,
+        event: &LivingEntityUseItemStartEvent<'_>,
     ) -> Flow {
         if event.entity.is_some() || Device::of_item(&event.stack.item).is_none() {
             return Flow::Continue;
@@ -274,7 +275,7 @@ impl Smoking {
 
     /// `onUseTick`: the bong bubbles as the draw starts (on the drawer's client) and wisps of
     /// smoke rise from its bowl (on the server).
-    pub fn use_tick(host: &mut dyn Host, event: &mut OnUseTickEvent<'_>) {
+    pub(crate) fn use_tick(host: &mut dyn Host, event: &OnUseTickEvent<'_>) {
         let Some(device) = Device::of_item(&event.stack.item) else {
             return;
         };
@@ -304,7 +305,11 @@ impl Smoking {
     }
 
     /// `finishUsingItem`: the draw is done, the bong hits.
-    pub fn use_finish(&self, host: &mut dyn Host, event: &mut LivingEntityUseItemFinishEvent<'_>) {
+    pub(crate) fn use_finish(
+        &self,
+        host: &mut dyn Host,
+        event: &mut LivingEntityUseItemFinishEvent<'_>,
+    ) {
         let Some(device) = Device::of_item(&event.stack.item) else {
             return;
         };
@@ -327,7 +332,7 @@ impl Smoking {
 
     /// `Smoking.expire`: the cooldown mark leaves the stack once it lapses, so the stack merges
     /// with its like again.
-    pub fn inventory_tick(host: &mut dyn Host, event: &mut InventoryTickEvent) {
+    pub(crate) fn inventory_tick(host: &mut dyn Host, event: &InventoryTickEvent) {
         let now = game_time(host);
         let Some(stack) = host.carried_stack(event.slot) else {
             return;
@@ -434,14 +439,11 @@ impl Smoking {
             return None;
         }
         stack.damage = spent.damage;
-        match spent.charges {
-            Some(left) => {
-                let _ = host.set_component(&mut stack, CHARGES, Tag::Int(left));
-            }
-            None => {
-                let _ = host.remove_component(&mut stack, SMOKE_CONTENTS);
-                let _ = host.remove_component(&mut stack, CHARGES);
-            }
+        if let Some(left) = spent.charges {
+            let _ = host.set_component(&mut stack, CHARGES, Tag::Int(left));
+        } else {
+            let _ = host.remove_component(&mut stack, SMOKE_CONTENTS);
+            let _ = host.remove_component(&mut stack, CHARGES);
         }
         Some(stack)
     }
@@ -509,7 +511,7 @@ impl Smoking {
 
     /// `SmokeScheduler.tick`, at each server tick's end: what is due lands on its player, if
     /// they are still on and alive.
-    pub fn server_tick(&self, host: &mut dyn Host, event: &mut ServerTickEvent<'_>) {
+    pub(crate) fn server_tick(&self, host: &mut dyn Host, event: &ServerTickEvent<'_>) {
         if !matches!(event.phase, ServerTickPhase::ServerTickEnd { .. }) {
             return;
         }
@@ -554,7 +556,7 @@ impl Smoking {
     }
 
     /// A player who died loses the exhale's effects still on their way.
-    pub fn respawned(&self, event: &mut PlayerRespawnedEvent<'_>) {
+    pub(crate) fn respawned(&self, event: &PlayerRespawnedEvent<'_>) {
         self.pending
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
@@ -755,7 +757,10 @@ impl Dice for SplitMix {
         i32::try_from(self.next() % bound).unwrap_or(0)
     }
 
-    #[allow(clippy::cast_precision_loss)]
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "24 random bits, exact in an f32"
+    )]
     fn next_float(&mut self) -> f32 {
         (self.next() >> 40) as f32 / (1u64 << 24) as f32
     }

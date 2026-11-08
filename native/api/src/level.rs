@@ -8,7 +8,7 @@ use crate::farm::World;
 use crate::farm::model::{Block, Kind, LightSource, Pos};
 use crate::states::States;
 
-pub struct LevelWorld<'a> {
+pub(crate) struct LevelWorld<'a> {
     pub level: &'a dyn LevelHost,
     pub states: &'a States,
 }

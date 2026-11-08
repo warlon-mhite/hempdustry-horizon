@@ -98,12 +98,12 @@ fn use_on_plant(world: &mut dyn World, held: Held, pos: Pos, out: &mut Vec<Effec
     if held == Held::WaterBottle && water_pot(world, above(lower_pos, -1), out) {
         return true;
     }
-    held == Held::Shears && cut(world, lower_pos, &lower, out)
+    held == Held::Shears && cut(world, lower_pos, lower, out)
 }
 
 /// Shears on the plant whose lower segment `lower` is at `lower_pos`: three windows, one leaf
 /// each, and the window's flag is what closes it. Ages 6 and 7 rub for resin instead of trimming.
-fn cut(world: &mut dyn World, lower_pos: Pos, lower: &Plant, out: &mut Vec<Effect>) -> bool {
+fn cut(world: &mut dyn World, lower_pos: Pos, lower: Plant, out: &mut Vec<Effect>) -> bool {
     let age = lower.age;
     let (spent, rub) = if age == EARLY_AGE {
         (lower.trimmed_early, false)
@@ -125,7 +125,7 @@ fn cut(world: &mut dyn World, lower_pos: Pos, lower: &Plant, out: &mut Vec<Effec
     }
     // The flag first, then the leaf: the flag is what the loot table reads to take this leaf back
     // off the harvest, so the leaf is only ever handed over together with it.
-    let mut marked = *lower;
+    let mut marked = lower;
     if age == EARLY_AGE {
         marked.trimmed_early = true;
     } else if rub {

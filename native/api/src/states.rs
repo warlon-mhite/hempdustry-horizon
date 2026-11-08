@@ -26,7 +26,7 @@ const FACINGS: [&str; 4] = ["north", "south", "west", "east"];
 
 /// The default state of each block the table needs, read off the host.
 #[derive(Clone, Debug)]
-pub struct Defaults {
+pub(crate) struct Defaults {
     crops: Vec<(Kind, BlockStateId)>,
     pot: BlockStateId,
     tray: BlockStateId,
@@ -38,7 +38,7 @@ pub struct Defaults {
 
 impl Defaults {
     /// None until the registries are there (or if our content mod isn't loaded).
-    pub fn read(host: &dyn Host) -> Option<Self> {
+    pub(crate) fn read(host: &dyn Host) -> Option<Self> {
         let state = |name: &str| host.default_state(name);
         let crops = Kind::ALL
             .into_iter()
@@ -66,7 +66,7 @@ impl Defaults {
 
 /// Every state of the blocks the farming rules read, both ways.
 #[derive(Debug, Default)]
-pub struct States {
+pub(crate) struct States {
     plants: HashMap<BlockStateId, Plant>,
     plant_ids: HashMap<Plant, BlockStateId>,
     pots: HashMap<BlockStateId, Pot>,
@@ -105,7 +105,7 @@ fn strings<T: ToString>(values: impl IntoIterator<Item = T>) -> Vec<String> {
 }
 
 impl States {
-    pub fn build(level: &dyn LevelHost, defaults: &Defaults) -> Self {
+    pub(crate) fn build(level: &dyn LevelHost, defaults: &Defaults) -> Self {
         let mut states = Self::default();
         let flags = || strings([false, true]);
         for &(kind, default) in &defaults.crops {
@@ -186,7 +186,7 @@ impl States {
 
     /// The block a state is, as far as the rules can tell from the id alone.
     #[must_use]
-    pub fn block(&self, id: BlockStateId) -> Block {
+    pub(crate) fn block(&self, id: BlockStateId) -> Block {
         if let Some(&plant) = self.plants.get(&id) {
             Block::Plant(plant)
         } else if let Some(&pot) = self.pots.get(&id) {
@@ -203,23 +203,23 @@ impl States {
     }
 
     #[must_use]
-    pub fn plant(&self, id: BlockStateId) -> Option<Plant> {
+    pub(crate) fn plant(&self, id: BlockStateId) -> Option<Plant> {
         self.plants.get(&id).copied()
     }
 
     /// The state that is `plant`, to write it.
     #[must_use]
-    pub fn plant_id(&self, plant: &Plant) -> Option<BlockStateId> {
-        self.plant_ids.get(plant).copied()
+    pub(crate) fn plant_id(&self, plant: Plant) -> Option<BlockStateId> {
+        self.plant_ids.get(&plant).copied()
     }
 
     #[must_use]
-    pub fn is_water(&self, id: BlockStateId) -> bool {
+    pub(crate) fn is_water(&self, id: BlockStateId) -> bool {
         self.water.contains(&id)
     }
 
     #[must_use]
-    pub fn is_soil(&self, id: BlockStateId) -> bool {
+    pub(crate) fn is_soil(&self, id: BlockStateId) -> bool {
         self.soil.contains(&id)
     }
 }

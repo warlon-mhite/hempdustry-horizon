@@ -14,9 +14,12 @@ pub fn chance(resistance: f32, moisture: f32, multiplier: f64) -> f32 {
         return 0.0;
     }
     // `(int) (resistance / moisture)`, as Java truncates toward zero.
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "Java's `(int)`: toward zero, saturating"
+    )]
     let steps = (resistance / moisture) as i32;
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation, reason = "Java's `(float)`")]
     let odds = (multiplier / f64::from(steps + 1)) as f32;
     odds
 }
@@ -104,6 +107,7 @@ pub fn field_moisture(world: &dyn World, pos: Pos, kind: Kind) -> f32 {
 }
 
 #[cfg(test)]
+#[expect(clippy::float_cmp, reason = "the rules return these constants exactly")]
 mod tests {
     use super::*;
 

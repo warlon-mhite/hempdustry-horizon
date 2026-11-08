@@ -230,7 +230,7 @@ impl Plant {
 
     /// A block above the lower one at `age`, carrying a copy of `lower`'s records.
     #[must_use]
-    pub const fn segment_of(lower: &Self, age: u8, segment: Segment) -> Self {
+    pub const fn segment_of(lower: Self, age: u8, segment: Segment) -> Self {
         let mut plant = Self::new(lower.kind, age, segment);
         plant.condition = lower.condition;
         plant.mildew = lower.mildew;

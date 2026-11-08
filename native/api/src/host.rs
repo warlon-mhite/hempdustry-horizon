@@ -39,14 +39,14 @@ const WATERY: [&str; 6] = [
 ];
 
 /// A block state as `/setblock` spells it, `name[key=value,…]`, taken apart.
-pub struct StateText<'a> {
+pub(crate) struct StateText<'a> {
     pub name: &'a str,
     props: Vec<(&'a str, &'a str)>,
 }
 
 impl<'a> StateText<'a> {
     #[must_use]
-    pub fn parse(text: &'a str) -> Self {
+    pub(crate) fn parse(text: &'a str) -> Self {
         let Some((name, rest)) = text.split_once('[') else {
             return Self {
                 name: text,
@@ -62,13 +62,13 @@ impl<'a> StateText<'a> {
     }
 
     #[must_use]
-    pub fn get(&self, key: &str) -> Option<&'a str> {
+    pub(crate) fn get(&self, key: &str) -> Option<&'a str> {
         self.props.iter().find(|(k, _)| *k == key).map(|(_, v)| *v)
     }
 
     /// The block as the farming rules see it.
     #[must_use]
-    pub fn block(&self) -> Block {
+    pub(crate) fn block(&self) -> Block {
         let flag = |key| self.get(key) == Some("true");
         let number = |key| self.get(key).and_then(|v| v.parse().ok()).unwrap_or(0);
         match self.name {
@@ -93,7 +93,7 @@ impl<'a> StateText<'a> {
 }
 
 /// The level a hook runs in, through the host.
-pub struct HostWorld<'a> {
+pub(crate) struct HostWorld<'a> {
     pub host: &'a mut dyn Host,
     pub dimension: &'a str,
     level: Option<LevelRef>,
@@ -102,7 +102,7 @@ pub struct HostWorld<'a> {
 }
 
 impl<'a> HostWorld<'a> {
-    pub fn new(
+    pub(crate) fn new(
         host: &'a mut dyn Host,
         dimension: &'a str,
         states: &'a States,
@@ -136,7 +136,7 @@ impl World for HostWorld<'_> {
 
     fn set(&mut self, pos: Pos, block: Block) -> bool {
         match block {
-            Block::Plant(plant) => match self.states.plant_id(&plant) {
+            Block::Plant(plant) => match self.states.plant_id(plant) {
                 Some(id) => self.host.set_block(self.dimension, pos, id, UPDATE_CLIENTS),
                 None => false,
             },
@@ -262,7 +262,7 @@ impl World for HostWorld<'_> {
         let dimension = self.dimension;
         self.host
             .level_random(dimension)
-            .map_or(0.5, |random| random.next_float())
+            .map_or(0.5, horizon_client::mod_api::RandomSource::next_float)
     }
 
     fn next_int(&mut self, bound: i32) -> i32 {
@@ -281,6 +281,10 @@ impl World for HostWorld<'_> {
 impl HostWorld<'_> {
     /// `BlockState.isSolidRender`, as near as the host tells it: a whole-block collision box that
     /// isn't glass (`#minecraft:impermeable`) or leaves.
+    #[expect(
+        clippy::float_cmp,
+        reason = "a full block's box is these exact numbers, as the block data writes them"
+    )]
     fn opaque(&self, pos: Pos, name: &str) -> bool {
         let boxes = self.host.block_collision(pos);
         let whole = matches!(boxes.as_slice(), [b] if *b == [0.0, 0.0, 0.0, 1.0, 1.0, 1.0]);
@@ -299,7 +303,7 @@ impl HostWorld<'_> {
     /// advancement for a ripe plant, read before anything goes; the blocks above the lower
     /// segment without drops, top down; then the lower segment with the player's loot, when the
     /// game isn't breaking it itself. A creative player gets no loot.
-    pub fn harvest(&mut self, harvest: &Harvest) {
+    pub(crate) fn harvest(&mut self, harvest: &Harvest) {
         let Some(player) = self.host.acting_player() else {
             return;
         };
@@ -331,7 +335,7 @@ impl HostWorld<'_> {
     /// first pass didn't know (see [`HarvestTest`]).
     fn trigger_harvest(&mut self, player: &NativeServerPlayer, harvest: &Harvest) {
         let bed = self.text(above(harvest.lower, -1)).unwrap_or_default();
-        let mut test = HarvestTest::new(&harvest.plant, StateText::parse(&bed));
+        let mut test = HarvestTest::new(harvest.plant, StateText::parse(&bed));
         let fire = |host: &mut dyn Host, test: &HarvestTest<'_>| {
             host.trigger_criterion(player.uuid, criteria::HARVEST_HEMP, &|criterion| {
                 test.matches(criterion.conditions)
@@ -365,7 +369,7 @@ impl HostWorld<'_> {
 
     /// Carries out a click's effects for the acting player, who used `used` (a stack in one of
     /// their hands).
-    pub fn apply(&mut self, used: &ItemStack, effects: Vec<Effect>) {
+    pub(crate) fn apply(&mut self, used: &ItemStack, effects: Vec<Effect>) {
         let Some(player) = self.host.acting_player() else {
             return;
         };
@@ -477,7 +481,10 @@ fn centre(pos: Pos) -> [f64; 3] {
     ]
 }
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "`Mth.floor`: Java's `(int)` cast saturates as `as` does"
+)]
 fn player_block(position: [f64; 3]) -> Pos {
     [
         position[0].floor() as i32,

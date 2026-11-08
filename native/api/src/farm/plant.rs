@@ -42,7 +42,7 @@ pub fn max_age_for(world: &dyn World, pos: Pos, kind: Kind) -> u8 {
 /// Where the lower segment of the plant `plant` at `pos` belongs to sits. A Lemon Haze upper is
 /// one block up while the plant is two tall and two once it is three tall.
 #[must_use]
-pub fn find_lower(world: &dyn World, pos: Pos, plant: &Plant) -> Pos {
+pub fn find_lower(world: &dyn World, pos: Pos, plant: Plant) -> Pos {
     match plant.segment {
         Segment::Lower => pos,
         Segment::Middle => above(pos, -1),
@@ -60,7 +60,7 @@ pub fn find_lower(world: &dyn World, pos: Pos, plant: &Plant) -> Pos {
 #[must_use]
 pub fn root(world: &dyn World, pos: Pos) -> Option<(Pos, Plant)> {
     let plant = *world.block(pos).plant()?;
-    let lower_pos = find_lower(world, pos, &plant);
+    let lower_pos = find_lower(world, pos, plant);
     let lower = *world.block(lower_pos).plant()?;
     (lower.kind == plant.kind && lower.is_lower()).then_some((lower_pos, lower))
 }
@@ -69,7 +69,7 @@ pub fn root(world: &dyn World, pos: Pos) -> Option<(Pos, Plant)> {
 /// a lower segment on farmland or a bed of ours (Beldía on its soil instead of farmland), a
 /// segment above on the right part of its own plant.
 #[must_use]
-pub fn may_stand_on(plant: &Plant, ground: Block, ground_is_beldia_soil: bool) -> bool {
+pub fn may_stand_on(plant: Plant, ground: Block, ground_is_beldia_soil: bool) -> bool {
     match plant.segment {
         Segment::Lower => {
             ground.is_medium()
@@ -92,7 +92,7 @@ pub fn may_stand_on(plant: &Plant, ground: Block, ground_is_beldia_soil: bool) -
 /// allows; without that, bone meal would push a boxed-in plant to maturity at a stunted height.
 /// A dry Beldía takes none either: bone meal is growth too.
 #[must_use]
-pub fn takes_bone_meal(world: &dyn World, pos: Pos, plant: &Plant) -> bool {
+pub fn takes_bone_meal(world: &dyn World, pos: Pos, plant: Plant) -> bool {
     plant.is_lower()
         && plant.age < max_age_for(world, pos, plant.kind)
         && (plant.kind != Kind::Beldia || growth::beldia_watered(world, above(pos, -1)))
@@ -112,7 +112,7 @@ pub fn bone_meal(world: &mut dyn World, pos: Pos) {
     if !plant.is_lower() {
         return;
     }
-    let extra = stress::of_bone_meal(world, pos, &plant);
+    let extra = stress::of_bone_meal(world, pos, plant);
     set_age(world, pos, plant.age + 1, extra);
 }
 
@@ -143,7 +143,7 @@ pub fn random_tick(world: &mut dyn World, pos: Pos) {
     }
     // Reconcile whether or not the plant aged: this repairs a plant whose height fell behind its
     // age. Guarded on there being something to write, so a finished field costs a block read.
-    if grown != age || !is_shape_settled(world, pos, &plant) {
+    if grown != age || !is_shape_settled(world, pos, plant) {
         set_age(world, pos, grown, 0.0);
     }
     mildew::random_tick(world, pos);
@@ -151,7 +151,7 @@ pub fn random_tick(world: &mut dyn World, pos: Pos) {
 
 /// Whether the plant whose lower segment `lower` is at `pos` already carries the segments its
 /// age calls for, so a reconciling [`set_age`] at the same age would write nothing above it.
-fn is_shape_settled(world: &dyn World, pos: Pos, lower: &Plant) -> bool {
+fn is_shape_settled(world: &dyn World, pos: Pos, lower: Plant) -> bool {
     let age = lower.age;
     let kind = lower.kind;
     let mid = world.block(above(pos, 1));
@@ -205,7 +205,7 @@ pub fn set_age(world: &mut dyn World, pos: Pos, new_age: u8, extra: f32) {
             kind.height(),
             extra,
         );
-        lower.mildew = mildew::after_step(world, pos, &plant);
+        lower.mildew = mildew::after_step(world, pos, plant);
         if new_age == Plant::MAX_AGE {
             let floor_pos = above(pos, -1);
             if let Some(spent) = Medium::of(world.block(floor_pos)).and_then(Medium::spent) {
@@ -224,7 +224,7 @@ pub fn set_age(world: &mut dyn World, pos: Pos, new_age: u8, extra: f32) {
         if upper_present || (new_age >= Plant::TWO_TALL_AGE && mid == Block::Air) {
             world.set(
                 mid_pos,
-                Block::Plant(Plant::segment_of(&lower, new_age, Segment::Upper)),
+                Block::Plant(Plant::segment_of(lower, new_age, Segment::Upper)),
             );
         }
         return;
@@ -235,16 +235,16 @@ pub fn set_age(world: &mut dyn World, pos: Pos, new_age: u8, extra: f32) {
         // Bottom up: the new upper needs the middle under it in place, or it fails to stand.
         world.set(
             mid_pos,
-            Block::Plant(Plant::segment_of(&lower, new_age, Segment::Middle)),
+            Block::Plant(Plant::segment_of(lower, new_age, Segment::Middle)),
         );
         world.set(
             top_pos,
-            Block::Plant(Plant::segment_of(&lower, new_age, Segment::Upper)),
+            Block::Plant(Plant::segment_of(lower, new_age, Segment::Upper)),
         );
     } else if new_age >= Plant::TWO_TALL_AGE && mid_free {
         world.set(
             mid_pos,
-            Block::Plant(Plant::segment_of(&lower, new_age, Segment::Upper)),
+            Block::Plant(Plant::segment_of(lower, new_age, Segment::Upper)),
         );
     }
 }

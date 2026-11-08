@@ -62,7 +62,7 @@ pub fn random_tick(world: &mut dyn World, lower: Pos) {
 
 /// The record after a growth step of `plant` at `lower`: kept, or mildew caught at [`ONSET`].
 /// Draws from the random only under a roof, so a field plant's step takes the draws it always did.
-pub fn after_step(world: &mut dyn World, lower: Pos, plant: &Plant) -> Mildew {
+pub fn after_step(world: &mut dyn World, lower: Pos, plant: Plant) -> Mildew {
     if plant.mildew == Mildew::Mildewed || !can_catch(world, lower, plant) {
         return plant.mildew;
     }
@@ -89,7 +89,7 @@ fn spread(world: &mut dyn World, lower: Pos) {
     if plant.mildew == Mildew::Mildewed || world.block(above(target, -1)).is_crop(plant.kind) {
         return;
     }
-    if world.next_float() >= SPREAD || !can_catch(world, target, &plant) || world.gassed(target) {
+    if world.next_float() >= SPREAD || !can_catch(world, target, plant) || world.gassed(target) {
         return;
     }
     write(world, target, Mildew::Mildewed);
@@ -97,7 +97,7 @@ fn spread(world: &mut dyn World, lower: Pos) {
 
 /// Mildew may take hold of this plant at all: switched on, a crop that doesn't resist it, unripe,
 /// under a roof.
-fn can_catch(world: &dyn World, lower: Pos, plant: &Plant) -> bool {
+fn can_catch(world: &dyn World, lower: Pos, plant: Plant) -> bool {
     world.config().mildew
         && !world.mildew_resistant(plant.kind)
         && !plant.is_ripe()

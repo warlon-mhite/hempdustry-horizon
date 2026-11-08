@@ -19,11 +19,11 @@ use std::cell::Cell;
 use serde_json::{Map, Value, json};
 
 /// The entry type the Java mod registers.
-pub const ENTRY: &str = "hempdustry:spoiling";
+pub(crate) const ENTRY: &str = "hempdustry:spoiling";
 /// The function that keeps what didn't spoil.
-pub const KEEP: &str = "hempdustry:spoiling_keep";
+pub(crate) const KEEP: &str = "hempdustry:spoiling_keep";
 /// The function that drops what did.
-pub const SPOILED: &str = "hempdustry:spoiling_spoiled";
+pub(crate) const SPOILED: &str = "hempdustry:spoiling_spoiled";
 
 thread_local! {
     /// How many items the last [`KEEP`] of this thread's roll spoiled.
@@ -31,7 +31,7 @@ thread_local! {
 }
 
 /// Rewrites every spoiling entry of `table`. False when it has none, and the table is unchanged.
-pub fn rewrite_table(table: &mut Value) -> bool {
+pub(crate) fn rewrite_table(table: &mut Value) -> bool {
     let Some(pools) = table.get_mut("pools").and_then(Value::as_array_mut) else {
         return false;
     };
@@ -110,14 +110,14 @@ fn rewrite_entry(entry: &mut Value, into: &mut Option<Value>) {
 
 /// [`KEEP`]: of `count` items, how many are kept; the spoiled rest is left for [`SPOILED`].
 /// `level` is the tool's level of the spoiling's enchantment.
-pub fn keep(data: &Value, seed: i64, level: i32, count: i32) -> i32 {
+pub(crate) fn keep(data: &Value, seed: i64, level: i32, count: i32) -> i32 {
     let spoiled = spoiled_of(data, seed, level, count);
     SPOILED_COUNT.with(|c| c.set(spoiled));
     count - spoiled
 }
 
 /// [`SPOILED`]: the count the roll before it spoiled, taken.
-pub fn take_spoiled() -> i32 {
+pub(crate) fn take_spoiled() -> i32 {
     SPOILED_COUNT.with(|c| c.replace(0))
 }
 
@@ -147,12 +147,15 @@ fn chance(chances: &Value, level: i32) -> f32 {
         return 0.0;
     };
     let at = usize::try_from(level).unwrap_or(0).min(list.len() - 1);
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "the Java codec reads the chance as a float"
+    )]
     list[at].as_f64().map_or(0.0, |c| c as f32)
 }
 
 /// The enchantment level the spoiling names, on `tool`'s enchantments; 0 with none named.
-pub fn level_of(data: &Value, enchantments: &[(String, i32)]) -> i32 {
+pub(crate) fn level_of(data: &Value, enchantments: &[(String, i32)]) -> i32 {
     data["enchantment"].as_str().map_or(0, |wanted| {
         enchantments
             .iter()
@@ -174,12 +177,18 @@ impl JavaRandom {
 
     fn next(&mut self, bits: u32) -> i32 {
         self.0 = (self.0.wrapping_mul(Self::MULTIPLIER).wrapping_add(0xB)) & Self::MASK;
-        #[allow(clippy::cast_possible_truncation)]
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "Java's `(int)` of a long keeps the low 32 bits, as `as` does"
+        )]
         let out = (self.0 >> (48 - bits)) as i32;
         out
     }
 
-    #[allow(clippy::cast_precision_loss)]
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "`Random.nextFloat`: 24 bits, exact in an f32"
+    )]
     fn next_float(&mut self) -> f32 {
         self.next(24) as f32 / (1 << 24) as f32
     }

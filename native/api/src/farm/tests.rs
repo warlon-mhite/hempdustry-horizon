@@ -154,7 +154,7 @@ fn a_boxed_in_plant_stops_one_stage_short_and_refuses_bone_meal() {
     world.set(above(ROOT, 1), Block::Other);
     plant::set_age(&mut world, ROOT, 4, 0.0);
     assert_eq!(world.plant(ROOT).age, 3);
-    assert!(!plant::takes_bone_meal(&world, ROOT, &world.plant(ROOT)));
+    assert!(!plant::takes_bone_meal(&world, ROOT, world.plant(ROOT)));
 }
 
 #[test]
@@ -223,29 +223,29 @@ fn dry_beldia_does_not_grow_and_watered_beldia_does() {
 fn beldia_stands_on_sand_and_the_others_on_farmland() {
     let beldia = Plant::new(Kind::Beldia, 0, Segment::Lower);
     let kush = Plant::new(Kind::Indica, 0, Segment::Lower);
-    assert!(plant::may_stand_on(&beldia, Block::Other, true));
-    assert!(!plant::may_stand_on(&beldia, WET, false));
-    assert!(plant::may_stand_on(&kush, WET, false));
+    assert!(plant::may_stand_on(beldia, Block::Other, true));
+    assert!(!plant::may_stand_on(beldia, WET, false));
+    assert!(plant::may_stand_on(kush, WET, false));
     assert!(plant::may_stand_on(
-        &kush,
+        kush,
         Block::Pot(Pot {
             fertility: 0,
             watered: false
         }),
         false
     ));
-    assert!(!plant::may_stand_on(&kush, Block::Other, true));
+    assert!(!plant::may_stand_on(kush, Block::Other, true));
 }
 
 #[test]
 fn an_upper_stands_only_on_its_own_plant() {
     let upper = Plant::new(Kind::Sativa, 6, Segment::Upper);
     let middle = Plant::new(Kind::Sativa, 6, Segment::Middle);
-    assert!(plant::may_stand_on(&upper, Block::Plant(middle), false));
-    assert!(plant::may_stand_on(&upper, lower(Kind::Sativa, 6), false));
-    assert!(!plant::may_stand_on(&upper, Block::Plant(upper), false));
-    assert!(!plant::may_stand_on(&upper, lower(Kind::Indica, 6), false));
-    assert!(!plant::may_stand_on(&middle, Block::Plant(middle), false));
+    assert!(plant::may_stand_on(upper, Block::Plant(middle), false));
+    assert!(plant::may_stand_on(upper, lower(Kind::Sativa, 6), false));
+    assert!(!plant::may_stand_on(upper, Block::Plant(upper), false));
+    assert!(!plant::may_stand_on(upper, lower(Kind::Indica, 6), false));
+    assert!(!plant::may_stand_on(middle, Block::Plant(middle), false));
 }
 
 #[test]
@@ -526,7 +526,7 @@ fn grown(kind: Kind) -> TestWorld {
     for (n, &segment) in (1..).zip(segments) {
         world.set(
             above(ROOT, n),
-            Block::Plant(Plant::segment_of(&ripe, Plant::MAX_AGE, segment)),
+            Block::Plant(Plant::segment_of(ripe, Plant::MAX_AGE, segment)),
         );
     }
     world

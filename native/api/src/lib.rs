@@ -8,6 +8,8 @@
 //! of that level's tick, with the full host.
 
 mod criteria;
+pub mod edible;
+mod edibles;
 pub mod farm;
 mod host;
 mod level;
@@ -30,7 +32,7 @@ use horizon_client::mod_api::{
     LivingEntityUseItemStartEvent, LootDropsEvent, LootFunctionEvent, LootTableLoadEvent,
     MayPlaceOnEvent, MenuQuickMoveEvent, MenuSlotRulesEvent, ModContainer,
     ModifyDefaultComponentsEvent, NativeDispensed, NativeScreen, OnUseTickEvent,
-    PerformBonemealEvent, PlayerRespawnedEvent, RandomSource, RandomTickEvent,
+    PerformBonemealEvent, PlaceBlockEvent, PlayerRespawnedEvent, RandomSource, RandomTickEvent,
     RightClickBlockV2Event, ScreenDrawEvent, ScreenEvent, ServerReloadListenerApplyEvent,
     ServerTickEvent, TickEvent, TooltipEvent, UseAnimationEvent, UseDurationEvent, UseItemEvent,
     UseItemOnEvent,
@@ -73,6 +75,7 @@ struct Hempdustry {
     states: OnceLock<States>,
     queue: Mutex<Vec<Job>>,
     smoking: smoking::Smoking,
+    edibles: edibles::Edibles,
     machines: machines::Machines,
 }
 
@@ -392,6 +395,7 @@ impl Hooks for Hempdustry {
 
     fn tooltip(&self, host: &dyn Host, event: &mut TooltipEvent<'_>) {
         self.smoking.tooltip(host, event);
+        edibles::Edibles::tooltip(host, event);
     }
 
     fn living_entity_use_item_start(
@@ -412,6 +416,7 @@ impl Hooks for Hempdustry {
         event: &mut LivingEntityUseItemFinishEvent<'_>,
     ) {
         self.smoking.use_finish(host, event);
+        self.edibles.use_finish(&self.smoking, host, event);
     }
 
     fn inventory_tick(&self, host: &mut dyn Host, event: &mut InventoryTickEvent) {
@@ -420,6 +425,11 @@ impl Hooks for Hempdustry {
 
     fn server_tick(&self, host: &mut dyn Host, event: &mut ServerTickEvent<'_>) {
         self.smoking.server_tick(host, event);
+        self.edibles.server_tick(host, event);
+    }
+
+    fn place_block(&self, host: &mut dyn Host, event: &mut PlaceBlockEvent<'_>) {
+        edibles::Edibles::place_block(host, event);
     }
 
     fn player_respawned(&self, _host: &mut dyn Host, event: &mut PlayerRespawnedEvent<'_>) {
@@ -484,6 +494,9 @@ impl Hooks for Hempdustry {
         host: &mut dyn Host,
         event: &mut RightClickBlockV2Event,
     ) -> Flow {
+        if self.edibles.cake_click(&self.smoking, host, event) == Flow::Cancel {
+            return Flow::Cancel;
+        }
         self.machines.infuser_right_click(host, event)
     }
 

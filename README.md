@@ -9,7 +9,7 @@ the Java repository, and its behaviour written again in Rust.
 | Part | What | Status |
 |---|---|---|
 | Content (`.hmod`) | Every block, item, recipe, loot table, tag, advancement, model, texture, sound and translation | Builds; every block places and draws |
-| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Farming, smoking, the Decarboxylator and the Infuser (`native/`): unit-tested, and played in a game on Horizon `2ebf00a` |
+| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Farming, smoking, eating, the Decarboxylator, the Infuser and the water cauldron (`native/`): unit-tested, and played in a game on Horizon `2ebf00a` |
 
 ## How it is built
 
@@ -36,7 +36,8 @@ Worlds stay compatible with the Java mod on Minecraft 26.3: the same ids, block 
 mod's farming rules as plain Rust with no Horizon types (growth, light records, stress, mildew, the
 Grow Pot and Hydro Tray, trimming, bone meal, harvesting), and `native/api/src/smoke/` its smoking
 rules (strains, devices and the green-out read from the same data files, a hit, the exhale, wear),
-tested on their own with `cargo test` in `native/api`; the rest of the crate wires them to
+`native/api/src/machine/` the machines' and `native/api/src/edible/` the edibles' (tiers, the
+come-up, the staggered effects), tested on their own with `cargo test` in `native/api`; the rest of the crate wires them to
 Horizon's hooks. `cargo clippy --all-targets` passes clean under the lint table in
 `native/api/Cargo.toml` (pedantic, no `unsafe`, no `unwrap` outside tests); a lint broken on
 purpose is answered on the spot with `#[expect(…, reason = "…")]`. Building it into a game is
@@ -58,7 +59,18 @@ A loaded smokeable or moon rock is named for its load in its tooltip ("Purple Ku
 "Mixed Vaporizer"), with "With Hashish" under a spliff or moon rock that carries hash; Horizon has
 no item-name hook, so the line above the hotbar keeps the plain name. Still to come: packing a
 device in a crafting grid (Horizon's crafting hook doesn't see the grid yet), per-strain tints,
-the cooldown overlay, Jelly Legs, the standing bong, edibles and the config file.
+the cooldown overlay, Jelly Legs, the standing bong and the config file.
+
+Eating, played in a game: a dosed edible (toast, cookie, brownie, dawamesk, bhang) gives nothing at
+once; its effects come after a come-up rolled from its quality's window (Perfect 87 to 93 s, Rough
+45 s to 4:20), Slowness alone first, then Absorption and Resistance, the munchies and Regeneration,
+at the potency and for the length the butter's strength and grade set, through the effect switches
+of the config. What is still to come is saved with the player, so a logout doesn't lose it, and a
+death does. A space cake keeps its dose when placed; every click on it is a bite (never a candle),
+feeding as a cake does, and the seventh takes the last slice. The butter's grade and dose and an
+edible's potency and quality show in their tooltips. Still to come: making a dosed edible, since the
+infused recipes and the bhang's are custom recipe types that Horizon's crafting hook can't serve
+yet (it doesn't see the grid), and the eating statistics.
 
 The Decarboxylator, played in a game: three trays on one fire, each on its own clock, buds and leaf
 to decarboxylated hemp by the shipped recipes, fuel from any item that burns in a furnace, hoppers

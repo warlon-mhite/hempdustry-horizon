@@ -89,7 +89,7 @@ pub(crate) struct Smoking {
 }
 
 /// Vanilla's category of an effect; an effect Horizon doesn't know counts as neutral.
-fn category(id: &str) -> Category {
+pub(crate) fn category(id: &str) -> Category {
     use horizon_client::brewing::Category as C;
     match horizon_client::brewing::effect(id).map(|e| e.category) {
         Some(C::Beneficial) => Category::Beneficial,
@@ -99,7 +99,7 @@ fn category(id: &str) -> Category {
 }
 
 impl Smoking {
-    fn catalog(&self) -> Arc<Catalog> {
+    pub(crate) fn catalog(&self) -> Arc<Catalog> {
         Arc::clone(&self.catalog.read().unwrap_or_else(PoisonError::into_inner))
     }
 
@@ -728,7 +728,7 @@ fn json_of(tag: &Tag) -> Value {
 }
 
 /// `SplitMix64`: the hit's rolls. The Java mod rolls on `ThreadLocalRandom`, unseeded too.
-struct SplitMix(u64);
+pub(crate) struct SplitMix(u64);
 
 impl Default for SplitMix {
     fn default() -> Self {
@@ -743,6 +743,15 @@ impl SplitMix {
         z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
         z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
         z ^ (z >> 31)
+    }
+
+    /// `nextDouble`: 53 random bits in `0..1`.
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "53 random bits, exact in an f64"
+    )]
+    pub(crate) fn next_double(&mut self) -> f64 {
+        (self.next() >> 11) as f64 / (1u64 << 53) as f64
     }
 }
 

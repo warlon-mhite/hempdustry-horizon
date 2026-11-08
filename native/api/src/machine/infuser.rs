@@ -163,6 +163,21 @@ impl Quality {
         }
     }
 
+    /// Every grade, lowest first.
+    pub const ALL: [Self; 4] = [Self::Rough, Self::Standard, Self::Clean, Self::Perfect];
+
+    /// The grade a `hempdustry:quality` value names (`Quality.CODEC`), None for another value.
+    #[must_use]
+    pub fn from_name(name: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|q| q.name() == name)
+    }
+
+    /// `Quality.getTranslationKey`.
+    #[must_use]
+    pub fn translation_key(self) -> String {
+        format!("hempdustry.quality.{}", self.name())
+    }
+
     /// The `hempdustry:quality` component's value.
     #[must_use]
     pub const fn name(self) -> &'static str {

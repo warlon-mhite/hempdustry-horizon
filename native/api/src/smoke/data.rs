@@ -1,12 +1,14 @@
 //! The data the smoking rules read: strains (`data/<ns>/hempdustry/strain/`), how each device
 //! smokes (`hempdustry/device/`), the green-out (`hempdustry/green_out/`) and the edibles' effects
-//! (`hempdustry/edible/`), parsed from the same JSON the Java mod's codecs read. A device or the
+//! (`hempdustry/edible/`, [`Bundle`]), parsed from the same JSON the Java mod's codecs read. A device or the
 //! green-out with no file of its own smokes by the numbers the Java mod ships ([`DeviceStats::built_in`],
 //! [`GreenOut::built_in`]); a strain exists only as a file.
 
 use std::collections::{BTreeMap, BTreeSet};
 
 use serde_json::Value;
+
+use crate::edible::Bundle;
 
 /// `MobEffectCategory`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -316,8 +318,8 @@ pub struct Catalog {
     pub strains: BTreeMap<String, Strain>,
     devices: BTreeMap<String, DeviceStats>,
     green_out: Option<GreenOut>,
-    /// The effects the edibles give (`EdibleBundle`'s `effects[].effect`).
-    pub edible_effects: BTreeSet<String>,
+    /// What the edibles do: the world's file, None when it has none or the codec refuses it.
+    edible: Option<Bundle>,
 }
 
 /// The Java mod's balance files are read under one default key each.
@@ -349,12 +351,16 @@ impl Catalog {
     }
 
     pub fn set_edibles(&mut self, files: &[(String, Value)]) {
-        self.edible_effects = files
+        self.edible = files
             .iter()
-            .filter(|(id, _)| namespaced(id) == EDIBLE_KEY)
-            .flat_map(|(_, json)| json["effects"].as_array().into_iter().flatten())
-            .filter_map(|effect| effect["effect"].as_str().map(namespaced))
-            .collect();
+            .find(|(id, _)| namespaced(id) == EDIBLE_KEY)
+            .and_then(|(_, json)| Bundle::parse(json));
+    }
+
+    /// `EdibleBundle.of`: the world's file, else what the Java mod ships.
+    #[must_use]
+    pub fn edible(&self) -> Bundle {
+        self.edible.clone().unwrap_or_else(Bundle::built_in)
     }
 
     #[must_use]
@@ -397,9 +403,10 @@ impl Catalog {
     /// `Smoking.buffsTheModGrants`: every beneficial effect an edible or a strain gives.
     #[must_use]
     pub fn buffs_the_mod_grants(&self, category: &dyn Fn(&str) -> Category) -> BTreeSet<String> {
-        self.edible_effects
-            .iter()
-            .cloned()
+        self.edible()
+            .effects
+            .into_iter()
+            .map(|e| e.effect)
             .chain(
                 self.strains
                     .values()

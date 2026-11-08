@@ -16,6 +16,8 @@ pub struct Policy {
     pub max_buff_level: i32,
     pub duration_multiplier: f64,
     pub cooldown_multiplier: f64,
+    /// Scales every quality's come-up window (`onsetMultiplier`, 0.05 to 10).
+    pub onset_multiplier: f64,
     pub green_out_chance_multiplier: f64,
     pub green_out: bool,
     pub nausea: bool,
@@ -31,6 +33,7 @@ impl Default for Policy {
             max_buff_level: 2,
             duration_multiplier: 1.0,
             cooldown_multiplier: 1.0,
+            onset_multiplier: 1.0,
             green_out_chance_multiplier: 1.0,
             green_out: true,
             nausea: true,
@@ -60,6 +63,27 @@ impl Policy {
                 duration: self.duration(e.duration),
                 amplifier: self.amplifier(category(&e.id), e.amplifier, buff_bonus),
                 id: e.id,
+            })
+            .collect()
+    }
+
+    /// `EffectPolicy.filterKeepingDuration`: [`Self::filter`] with no buff bonus, for effects
+    /// whose durations the caller has already scaled (an edible's).
+    #[must_use]
+    pub fn filter_keeping_duration(
+        &self,
+        effects: Vec<Effect>,
+        category: &dyn Fn(&str) -> Category,
+    ) -> Vec<Effect> {
+        if !self.enabled {
+            return Vec::new();
+        }
+        effects
+            .into_iter()
+            .filter(|e| self.allowed(e, category(&e.id)))
+            .map(|e| Effect {
+                amplifier: self.amplifier(category(&e.id), e.amplifier, 0),
+                ..e
             })
             .collect()
     }
@@ -135,9 +159,29 @@ impl Policy {
             .clamp(1.0, f64::from(i32::MAX)) as i32
     }
 
+    /// `EffectPolicy.onset`: an edible's come-up of `ticks`, scaled, and kept inside its window
+    /// `min..=max` scaled the same way (never under a tick).
+    #[must_use]
+    pub fn onset(&self, ticks: i32, min: i32, max: i32) -> i32 {
+        let scale = |t: i32| java_round(f64::from(t) * self.onset_multiplier);
+        let low = scale(min).max(1);
+        let high = scale(max).max(1);
+        scale(ticks).clamp(low, high.max(low))
+    }
+
     /// `EffectPolicy.nauseaChanceOneIn`.
     #[must_use]
     pub fn nausea_one_in(&self, one_in: i32) -> i32 {
         if self.nausea { one_in } else { 0 }
     }
+}
+
+/// Java's `(int) Math.round(double)` for the ticks a multiplier gives: ties go up, and a value
+/// past the int range saturates as the cast does.
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "Java's `(int)` of a long, which saturates as `as` does for values this mod makes"
+)]
+fn java_round(value: f64) -> i32 {
+    (value + 0.5).floor() as i32
 }

@@ -44,6 +44,14 @@
     "trimmed_early": "false",
     "trimmed_late": "false"
   },
+  "properties": {
+    "random_ticks": {
+      "property": "half",
+      "values": [
+        "lower"
+      ]
+    }
+  },
   "shapes": {
     "properties": [
       "age",

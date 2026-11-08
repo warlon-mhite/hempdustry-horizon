@@ -197,10 +197,16 @@ def block_decl(facts, vanilla_items, name):
     t_occl = {s["can_occlude"] for s in tmpl["states"].values()}
     if occl == {False} and t_occl != {False}:
         props["occludes"] = False
+    # Whether each of our states ticks as the template state with the same template properties
+    # does: comparing the two sets of answers would call wheat (ticks below age 7) and a crop whose
+    # lower half always ticks the same, since both sets are {true, false}.
     ticks = {k: s["random_ticks"] for k, s in ours["states"].items()}
-    t_ticks = {s["random_ticks"] for s in tmpl["states"].values()}
+    t_names = list(tmpl["properties"])
+    t_ticks = {state_key(parse_state(k), t_names): s["random_ticks"] for k, s in tmpl["states"].items()}
     tick_set = set(ticks.values())
-    if tick_set != t_ticks:
+    # A template property we lack (the furnace's `lit` under the infuser) stays at its default.
+    as_template = lambda k: state_key({**t_default, **parse_state(k)}, t_names)
+    if any(t != t_ticks[as_template(k)] for k, t in ticks.items()):
         if len(tick_set) == 1:
             props["random_ticks"] = next(iter(tick_set))
         else:

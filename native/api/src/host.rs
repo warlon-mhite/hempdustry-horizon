@@ -2,8 +2,7 @@
 //! tick (where queued random ticks and bone meal are played) and a player's click.
 
 use horizon_client::mod_api::{
-    EquipmentSlot, Hand, Host, ItemStack, LevelRef, NativeHeightmap, NativeServerPlayer,
-    RandomSource,
+    EquipmentSlot, Host, ItemStack, LevelRef, NativeHeightmap, NativeServerPlayer, RandomSource,
 };
 
 use crate::criteria::{self, HarvestTest};
@@ -21,6 +20,12 @@ const UPDATE_ALL_NO_DROPS: i32 = 3 | 32;
 
 /// `GameType.CREATIVE`, as `NativeServerPlayer.game_mode` numbers it.
 const CREATIVE: i32 = 1;
+
+/// The hotbar, slots 0 to 8 of `Host::carried_stack`.
+const HOTBAR_SLOTS: i32 = 9;
+
+/// The off hand in `Host::carried_stack`'s numbers.
+const OFF_HAND: i32 = -106;
 
 /// Blocks that hold water without being water (`FluidState.is(FluidTags.WATER)`), besides any
 /// block whose `waterlogged` is true.
@@ -275,11 +280,10 @@ impl HostWorld<'_> {
             && !self.in_tag(name, "minecraft:leaves")
     }
 
-    /// The acting player's main-hand stack, what their break rolls the loot for.
-    fn main_hand(&self, player: &NativeServerPlayer) -> Option<ItemStack> {
-        let entity = self.host.entity(u32::try_from(player.entity_id).ok()?)?;
-        let living = self.host.living(entity)?;
-        self.host.living_hand_item(living, Hand::Main)
+    /// The acting player's main-hand stack, what their break rolls the loot for. Read from the
+    /// acting player's own slots: their entity handle isn't found while their turn runs.
+    fn main_hand(&self) -> Option<ItemStack> {
+        self.host.equipment(EquipmentSlot::MainHand)
     }
 
     /// Takes the plant as the acting player breaks one block of it (or its bed): the harvest
@@ -309,7 +313,7 @@ impl HostWorld<'_> {
                     .set_block(self.dimension, harvest.lower, air, UPDATE_ALL_NO_DROPS);
             }
         } else {
-            let tool = self.main_hand(&player);
+            let tool = self.main_hand();
             self.host.destroy_block(harvest.lower, tool.as_ref(), false);
         }
     }
@@ -337,6 +341,19 @@ impl HostWorld<'_> {
         fire(self.host, &test);
     }
 
+    /// The acting player's slot holding `used`, the stack a click used, in
+    /// [`Host::carried_stack`]'s numbers: the main hand's hotbar slot, else the off hand. The
+    /// player's own slots, because their entity handle isn't found while their turn runs. The
+    /// selected slot's number isn't told: it is the first hotbar slot holding that very stack,
+    /// the same whichever of two equal stacks it is.
+    fn hand_slot(&mut self, used: &ItemStack) -> Option<i32> {
+        if self.host.equipment(EquipmentSlot::MainHand).as_ref() == Some(used) {
+            return (0..HOTBAR_SLOTS)
+                .find(|&slot| self.host.carried_stack(slot).is_some_and(|s| s == used));
+        }
+        (self.host.equipment(EquipmentSlot::OffHand).as_ref() == Some(used)).then_some(OFF_HAND)
+    }
+
     /// Carries out a click's effects for the acting player, who used `used` (a stack in one of
     /// their hands).
     pub fn apply(&mut self, used: &ItemStack, effects: Vec<Effect>) {
@@ -344,20 +361,7 @@ impl HostWorld<'_> {
             return;
         };
         let creative = player.game_mode == CREATIVE;
-        let living = u32::try_from(player.entity_id)
-            .ok()
-            .and_then(|id| self.host.entity(id))
-            .and_then(|entity| self.host.living(entity));
-        // The hand that holds the stack the click used.
-        let slot = living.and_then(|living| {
-            [
-                (Hand::Main, EquipmentSlot::MainHand),
-                (Hand::Off, EquipmentSlot::OffHand),
-            ]
-            .into_iter()
-            .find(|(hand, _)| self.host.living_hand_item(living, *hand).as_ref() == Some(used))
-            .map(|(_, slot)| (living, slot))
-        });
+        let slot = self.hand_slot(used);
         let mut held = Some(used.clone());
         let mut give = Vec::new();
         for effect in effects {
@@ -418,10 +422,15 @@ impl HostWorld<'_> {
                 }
             }
         }
-        if let Some((living, slot)) = slot
+        if let Some(slot) = slot
             && held.as_ref() != Some(used)
+            && let Some(stack) = self.host.carried_stack(slot)
         {
-            self.host.living_set_equipment(living, slot, held);
+            match held {
+                Some(left) => *stack = left,
+                // A count of 0 empties the slot.
+                None => stack.count = 0,
+            }
         }
         for item in give {
             if creative && self.host.count_items(item) > 0 {

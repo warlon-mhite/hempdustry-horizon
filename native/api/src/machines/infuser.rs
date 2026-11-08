@@ -113,7 +113,7 @@ pub(super) struct Live {
 /// A tub by level and position.
 pub(super) type At = (u8, [i32; 3]);
 
-fn at(dimension: LevelDimension, pos: [i32; 3]) -> At {
+pub(super) fn at(dimension: LevelDimension, pos: [i32; 3]) -> At {
     let level = match dimension {
         LevelDimension::Overworld => 0,
         LevelDimension::Nether => 1,
@@ -180,7 +180,7 @@ impl Game for HostGame<'_> {
     }
 }
 
-fn is_air(block: &str) -> bool {
+pub(super) fn is_air(block: &str) -> bool {
     matches!(
         block,
         "minecraft:air" | "minecraft:cave_air" | "minecraft:void_air"
@@ -189,7 +189,7 @@ fn is_air(block: &str) -> bool {
 
 /// Whether the block below heats the tub (`isHeatedFrom`): in `#hempdustry:heat_sources`, and
 /// lit if it can be.
-fn heated_from(host: &dyn Host, below: [i32; 3]) -> bool {
+pub(super) fn heated_from(host: &dyn Host, below: [i32; 3]) -> bool {
     let block = host.block(below);
     host.block_name_in_tag(&block, HEAT_SOURCES)
         .unwrap_or(false)

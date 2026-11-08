@@ -1,6 +1,6 @@
 //! The machines ([`crate::machine`]) wired to Horizon: each one's block entity, its container and
 //! hopper faces, its tick, its menu's slot rules and shift-clicks, and its screen: the
-//! Decarboxylator here, the Infuser in [`infuser`]. The Sifting Box ([`sifting`]) is a vessel with
+//! Decarboxylator here, the Infuser in [`infuser`], the Hemp Press in [`press`]. The Sifting Box ([`sifting`]) is a vessel with
 //! no block entity, and the cauldron ([`cauldron`]) is vanilla's.
 //!
 //! Burn times: a native mod can't ask Horizon how long an item burns, so the items' default
@@ -22,9 +22,11 @@ use horizon_client::mod_api::{
     ServerReloadListenerApplyEvent, Tag,
 };
 use infuser::INFUSER;
+use press::HEMP_PRESS;
 
 pub(crate) mod cauldron;
 pub(crate) mod infuser;
+pub(crate) mod press;
 pub(crate) mod sifting;
 
 /// The Decarboxylator: its block, its block entity type and its menu type share the id.
@@ -77,6 +79,11 @@ pub(crate) struct Machines {
     settling: Mutex<Vec<sifting::Settling>>,
     /// Players whose click a box took, and the game time it did.
     claims: Mutex<HashMap<u128, i64>>,
+    pressing: RwLock<Arc<Recipes>>,
+    /// Each press's push cooldown, by level and position.
+    presses: RwLock<HashMap<infuser::At, i32>>,
+    /// The client's presses mid-stroke: the game time each was first seen pressing.
+    strokes: Mutex<HashMap<[i32; 3], i64>>,
 }
 
 /// The game's answers, as the oven asks them.
@@ -152,36 +159,21 @@ impl Machines {
 
     /// The decarboxylating recipes, read again when the data load changed them.
     fn refresh_recipes(&self, host: &dyn Host) {
-        let found = host.recipes_of_type(DECARBOXYLATING);
-        let from: Vec<usize> = found
-            .iter()
-            .map(|r| Arc::as_ptr(&r.json) as usize)
-            .collect();
-        if self
-            .recipes
-            .read()
-            .unwrap_or_else(PoisonError::into_inner)
-            .from
-            == from
-        {
-            return;
-        }
-        let list = found
-            .iter()
-            .filter_map(|recipe| {
-                Some(Recipe {
-                    ingredient: host.recipe_ingredient(&recipe.json["ingredient"])?,
-                    result: host.recipe_result(&recipe.json["result"])?,
-                })
-            })
-            .collect();
-        *self.recipes.write().unwrap_or_else(PoisonError::into_inner) =
-            Arc::new(Recipes { from, list });
+        refresh(host, DECARBOXYLATING, &self.recipes);
     }
 
-    /// Runs `f` with the game's answers about items.
+    /// Runs `f` with the game's answers about items, the oven's recipes among them.
     fn with_kitchen<R>(&self, f: impl FnOnce(&GameKitchen<'_>) -> R) -> R {
-        let recipes = Arc::clone(&self.recipes.read().unwrap_or_else(PoisonError::into_inner));
+        self.with_recipes(&self.recipes, f)
+    }
+
+    /// Runs `f` with the game's answers about items, the recipes those of `cache`.
+    fn with_recipes<R>(
+        &self,
+        cache: &RwLock<Arc<Recipes>>,
+        f: impl FnOnce(&GameKitchen<'_>) -> R,
+    ) -> R {
+        let recipes = Arc::clone(&cache.read().unwrap_or_else(PoisonError::into_inner));
         let providers = Arc::clone(
             &self
                 .providers
@@ -200,6 +192,9 @@ impl Machines {
         if infuser::is_infuser(event.block) {
             return Some(Self::infuser_block_entity());
         }
+        if press::is_press(event.block) {
+            return Some(Self::press_block_entity());
+        }
         (block_id(event.block) == DECARBOXYLATOR).then(|| {
             let mut nbt = Compound::new();
             save(&mut nbt, &Oven::default());
@@ -208,7 +203,10 @@ impl Machines {
     }
 
     pub(crate) fn block_entity_ticks(event: &mut BlockEntityTicksEvent<'_>) {
-        if block_id(event.block) == DECARBOXYLATOR || infuser::is_infuser(event.block) {
+        if block_id(event.block) == DECARBOXYLATOR
+            || infuser::is_infuser(event.block)
+            || press::is_press(event.block)
+        {
             event.ticks = true;
         }
     }
@@ -222,6 +220,9 @@ impl Machines {
         use decarb::{FUEL_SLOT, OUTPUT_SLOT, SLOT_COUNT};
         if infuser::is_infuser(event.block) {
             return Some(Self::infuser_container());
+        }
+        if press::is_press(event.block) {
+            return Some(Self::press_container());
         }
         (block_id(event.block) == DECARBOXYLATOR).then(|| {
             let trays: Vec<usize> = decarb::TRAYS.collect();
@@ -253,6 +254,10 @@ impl Machines {
             self.tick_infuser(host, event);
             return;
         }
+        if event.entity.id == HEMP_PRESS {
+            self.tick_press(host, event);
+            return;
+        }
         if event.entity.id != DECARBOXYLATOR {
             return;
         }
@@ -282,6 +287,10 @@ impl Machines {
             self.infuser_slot_rules(event);
             return;
         }
+        if event.menu == HEMP_PRESS {
+            self.press_slot_rules(event);
+            return;
+        }
         if event.menu == DECARBOXYLATOR && event.slot < decarb::SLOT_COUNT {
             event.may_place =
                 self.with_kitchen(|kitchen| decarb::accepts(event.slot, event.stack, kitchen));
@@ -292,6 +301,13 @@ impl Machines {
     pub(crate) fn container_accepts(&self, event: &ContainerAcceptsEvent<'_>) -> Flow {
         if event.entity.id == INFUSER {
             return if self.infuser_accepts(event) {
+                Flow::Continue
+            } else {
+                Flow::Cancel
+            };
+        }
+        if event.entity.id == HEMP_PRESS {
+            return if self.press_accepts(event) {
                 Flow::Continue
             } else {
                 Flow::Cancel
@@ -315,6 +331,9 @@ impl Machines {
     ) -> Flow {
         if event.entity.id == INFUSER {
             return self.infuser_quick_move(host, event);
+        }
+        if event.entity.id == HEMP_PRESS {
+            return self.press_quick_move(host, event);
         }
         if event.entity.id != DECARBOXYLATOR || event.slot < event.container_slots {
             return Flow::Continue;
@@ -340,6 +359,9 @@ impl Machines {
         if infuser::is_infuser(event.block) {
             return Some(Self::infuser_screen());
         }
+        if press::is_press(event.block) {
+            return Some(Self::press_screen());
+        }
         (block_id(event.block) == DECARBOXYLATOR).then(|| NativeScreen {
             width: PANEL[0],
             height: PANEL[1],
@@ -356,6 +378,10 @@ impl Machines {
     pub(crate) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         if infuser::is_infuser(event.block) {
             Self::infuser_screen_draw(host, event);
+            return;
+        }
+        if press::is_press(event.block) {
+            Self::press_screen_draw(host, event);
             return;
         }
         if block_id(event.block) != DECARBOXYLATOR {
@@ -432,4 +458,27 @@ fn save(nbt: &mut Compound, oven: &Oven) {
     nbt.insert(BURN_TIME.into(), Tag::Int(oven.burn_time));
     nbt.insert(FUEL_TIME.into(), Tag::Int(oven.fuel_time));
     nbt.insert(PROGRESS.into(), Tag::IntArray(oven.progress.to_vec()));
+}
+
+/// The recipes of type `kind` (one ingredient, one result), read into `cache` again when the
+/// data load changed them.
+fn refresh(host: &dyn Host, kind: &str, cache: &RwLock<Arc<Recipes>>) {
+    let found = host.recipes_of_type(kind);
+    let from: Vec<usize> = found
+        .iter()
+        .map(|r| Arc::as_ptr(&r.json) as usize)
+        .collect();
+    if cache.read().unwrap_or_else(PoisonError::into_inner).from == from {
+        return;
+    }
+    let list = found
+        .iter()
+        .filter_map(|recipe| {
+            Some(Recipe {
+                ingredient: host.recipe_ingredient(&recipe.json["ingredient"])?,
+                result: host.recipe_result(&recipe.json["result"])?,
+            })
+        })
+        .collect();
+    *cache.write().unwrap_or_else(PoisonError::into_inner) = Arc::new(Recipes { from, list });
 }

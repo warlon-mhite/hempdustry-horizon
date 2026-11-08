@@ -24,18 +24,18 @@ use std::sync::{Mutex, OnceLock, PoisonError};
 
 use horizon_client::mod_api::{
     AddServerReloadListenersEvent, AnalogOutputEvent, BlockEntityContainerEvent, BlockEntityEvent,
-    BlockEntityTickEvent, BlockEntityTicksEvent, CanSurviveEvent, ComponentTypesEvent, Compound,
-    ContainerAcceptsEvent, DestroyBlockEvent, DispenseItemEvent, Flow, HasAnalogOutputEvent, Hooks,
-    Host, InventoryTickEvent, IsBonemealSuccessEvent, IsValidBonemealTargetEvent,
-    ItemModelPropertyEvent, ItemStack, LevelDimension, LevelHost, LevelRandomHost,
-    LevelTickPostEvent, LevelWriteHost, LivingEntityUseItemFinishEvent,
+    BlockEntitySubmitEvent, BlockEntityTickEvent, BlockEntityTicksEvent, CanSurviveEvent,
+    ComponentTypesEvent, Compound, ContainerAcceptsEvent, DestroyBlockEvent, DispenseItemEvent,
+    Flow, HasAnalogOutputEvent, Hooks, Host, InventoryTickEvent, IsBonemealSuccessEvent,
+    IsValidBonemealTargetEvent, ItemModelPropertyEvent, ItemStack, LevelDimension, LevelHost,
+    LevelRandomHost, LevelTickPostEvent, LevelWriteHost, LivingEntityUseItemFinishEvent,
     LivingEntityUseItemStartEvent, LootDropsEvent, LootFunctionEvent, LootTableLoadEvent,
     MayPlaceOnEvent, MenuQuickMoveEvent, MenuSlotRulesEvent, ModContainer,
     ModifyDefaultComponentsEvent, NativeDispensed, NativeScreen, OnUseTickEvent,
     PerformBonemealEvent, PlaceBlockEvent, PlayerRespawnedEvent, RandomSource, RandomTickEvent,
     RightClickBlockV2Event, ScreenDrawEvent, ScreenEvent, ServerReloadListenerApplyEvent,
-    ServerTickEvent, TickEvent, TooltipEvent, UseAnimationEvent, UseDurationEvent, UseItemEvent,
-    UseItemOnEvent,
+    ServerTickEvent, StandaloneModelsEvent, TickEvent, TooltipEvent, UseAnimationEvent,
+    UseDurationEvent, UseItemEvent, UseItemOnEvent,
 };
 
 use farm::harvest;
@@ -313,6 +313,7 @@ impl Hooks for Hempdustry {
     /// the plant on it first. The game then breaks the block itself as usual.
     fn destroy_block(&self, host: &mut dyn Host, event: &mut DestroyBlockEvent) -> Flow {
         self.machines.infuser_destroyed(host, event);
+        self.machines.press_destroyed(host, event);
         let Some(states) = self.states.get() else {
             return Flow::Continue;
         };
@@ -490,6 +491,16 @@ impl Hooks for Hempdustry {
 
     fn screen_draw(&self, host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         machines::Machines::screen_draw(host, event);
+    }
+
+    // The Hemp Press's moving parts, drawn on the client.
+
+    fn standalone_models(&self, event: &mut StandaloneModelsEvent<'_>) {
+        machines::Machines::standalone_models(event);
+    }
+
+    fn block_entity_submit(&self, host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
+        self.machines.press_submit(host, event);
     }
 
     // The Infuser's pour, by hand or by a dispenser, its spill when exploded, and its comparator;

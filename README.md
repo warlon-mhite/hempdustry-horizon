@@ -9,7 +9,7 @@ the Java repository, and its behaviour written again in Rust.
 | Part | What | Status |
 |---|---|---|
 | Content (`.hmod`) | Every block, item, recipe, loot table, tag, advancement, model, texture, sound and translation | Builds; every block places and draws |
-| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Farming, smoking, eating, the Decarboxylator, the Infuser, the Sifting Box and the water cauldron (`native/`): unit-tested, and played in a game on Horizon `2ebf00a` |
+| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Farming, smoking, eating, the Decarboxylator, the Infuser, the Hemp Press, the Sifting Box and the water cauldron (`native/`): unit-tested, and played in a game on Horizon `2ebf00a` |
 
 ## How it is built
 
@@ -78,8 +78,7 @@ from above (trays), the sides (fuel) and below (output), only what belongs in ea
 state, shift-clicks, its own screen with the flame and the three arrows, and its contents spilled
 when broken. Worlds keep its block data in the Java mod's keys. Horizon resolves only Minecraft's
 own burn-time references, so the native mod writes the mod's fuel times out: hemp burns in a
-vanilla furnace too. Still to come here: the oven's crackle and smoke, an anvil name on its screen,
-and the Hemp Press.
+vanilla furnace too. Still to come here: the oven's crackle and smoke, and an anvil name on its screen.
 
 The Infuser, played in a game: heat from the block below (a campfire, a lit furnace or oven, magma,
 lava), milk poured by hand or by a dispenser with the empty handed back, hemp fed by hand or by
@@ -92,6 +91,13 @@ back its dissolved hemp but never the butter. Still to come: its bubbles, steam 
 The water cauldron, played in a game: decarboxylated hemp washes and hemp stems ret in it, one
 for one, water charged by the amount (a full cauldron washes a stack of 64) and what doesn't fit
 in the inventory dropped at the player's feet.
+
+The Hemp Press, played in a game: heated from the block below as the Infuser, kief pressed into
+hashish, bubble hash and filtered kief into filtered hashish, filtered hashish into rosin and a
+retted stem into eight fibre, one squeeze every 200 ticks, cooling off without heat or room; the
+output pushed out of its back one item at a time into whatever container stands there, hoppers
+feeding it only what it presses, its screen with the arrow and the flame, and its platen screwed
+down onto the packet and lifted again while it presses. Still to come: its steam and creak.
 
 The Sifting Box, played in a game: buds and leaves over a dry screen into nine kief, kief re-sifted
 into nine filtered kief, a bucket of water turning it into an ice-water wash that runs only inside a

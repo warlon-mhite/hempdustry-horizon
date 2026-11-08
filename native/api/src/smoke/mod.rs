@@ -7,6 +7,7 @@ pub mod contents;
 pub mod data;
 pub mod device;
 pub mod hit;
+pub mod name;
 pub mod policy;
 
 #[cfg(test)]

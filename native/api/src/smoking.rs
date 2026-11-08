@@ -15,12 +15,14 @@ use horizon_client::mod_api::{
     InventoryTickEvent, ItemModelPropertyEvent, ItemStack, LivingEntityUseItemFinishEvent,
     LivingEntityUseItemStartEvent, NativeCriterion, NativeEffect, NativeReloadListener,
     NativeServerPlayer, OnUseTickEvent, ParticleOptions, ParticleType, PlayerRespawnedEvent,
-    ServerReloadListenerApplyEvent, ServerTickEvent, ServerTickPhase, Tag, UseAnimation,
-    UseAnimationEvent, UseDurationEvent, UseItemEvent,
+    ServerReloadListenerApplyEvent, ServerTickEvent, ServerTickPhase, Tag, TooltipEvent,
+    UseAnimation, UseAnimationEvent, UseDurationEvent, UseItemEvent,
 };
+use horizon_client::text::{GRAY, Text};
 use serde_json::{Map, Value};
 
 use crate::smoke::hit::{Dice, Hit, Rules, Smoker, Spent, Worn};
+use crate::smoke::name::{self, Labels, PackedName};
 use crate::smoke::{Catalog, Category, Device, Effect, Exhale, Policy, SmokeContents};
 
 pub const SMOKE_CONTENTS: &str = "hempdustry:smoke_contents";
@@ -207,6 +209,38 @@ impl Smoking {
         if let Some(component) = event.property.strip_prefix("hempdustry:has/") {
             let id = format!("hempdustry:{component}");
             event.value = matches!(event.stack.patch.get(&id), Some(Some(_)));
+        }
+    }
+
+    /// `getName` and `appendHoverText` of the spliff, the devices and the moon rock: a loaded
+    /// one is named for its load ("Purple Kush Bong III"), and a spliff or moon rock carrying
+    /// hash says so under the name ("With Hashish", grey italic). A custom name wins, as in
+    /// Java. Horizon has no item-name hook, so the name changes in the tooltip only.
+    pub fn tooltip(&self, host: &dyn Host, event: &mut TooltipEvent<'_>) {
+        let stack = event.stack;
+        // Asked every frame for every hovered stack: leave others' items before any lookup.
+        if !stack.item.starts_with("hempdustry:") {
+            return;
+        }
+        let Ok(Some(tag)) = host.component(stack, SMOKE_CONTENTS) else {
+            return;
+        };
+        let catalog = self.catalog();
+        let labels = Labels::of(&catalog);
+        let contents = labels.contents(&json_of(tag));
+        if stack.custom_name().is_none()
+            && let Some(name) = name::packed_name(&stack.item, &contents, labels)
+            && let Some((line, _)) = event.lines.first_mut()
+        {
+            *line = name_text(&name);
+        }
+        if let Some(hash) = name::with_line(&stack.item, &contents, labels) {
+            let text = Text::translate(name::WITH, &[Text::translate(hash, &[])])
+                .with_color(GRAY)
+                .italic();
+            // Right under the name, where `appendHoverText` puts it.
+            let at = event.lines.len().min(1);
+            event.lines.insert(at, (text, u32::MAX));
         }
     }
 
@@ -552,6 +586,18 @@ fn smoke_matches(
         return false;
     }
     criterion.item("item", stack)
+}
+
+/// `SmokeContents.packedName` as text: the format filled with the load's name, then a space
+/// and vanilla's Roman numeral.
+fn name_text(name: &PackedName<'_>) -> Text {
+    let text = Text::translate(name.format, &[Text::translate(name.load.key(), &[])]);
+    match name.level {
+        Some(level) => text
+            .append(Text::literal(" "))
+            .append(Text::translate(&format!("enchantment.level.{level}"), &[])),
+        None => text,
+    }
 }
 
 fn give(host: &mut dyn Host, uuid: u128, effects: &[Effect]) {

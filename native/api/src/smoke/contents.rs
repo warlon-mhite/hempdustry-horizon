@@ -39,6 +39,12 @@ impl SmokeContents {
     /// unpacked rather than lost.
     #[must_use]
     pub fn parse(value: &Value, catalog: &Catalog) -> Self {
+        Self::parse_with(value, |id| catalog.strain(id).is_some())
+    }
+
+    /// [`Self::parse`], with `known` saying which strains exist.
+    #[must_use]
+    pub fn parse_with(value: &Value, known: impl Fn(&str) -> bool) -> Self {
         let list = match value {
             Value::Array(list) => list.as_slice(),
             Value::Object(_) => value["entries"].as_array().map_or(&[][..], Vec::as_slice),
@@ -49,8 +55,7 @@ impl SmokeContents {
             .filter_map(|entry| {
                 let strain = namespaced(entry["strain"].as_str()?);
                 let count = i32::try_from(entry["count"].as_i64()?).ok()?;
-                catalog.strain(&strain)?;
-                Some(Entry { strain, count })
+                known(&strain).then_some(Entry { strain, count })
             })
             .collect();
         Self { entries }

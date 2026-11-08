@@ -25,7 +25,7 @@ use horizon_client::mod_api::{
     LevelTickPostEvent, LevelWriteHost, LivingEntityUseItemFinishEvent,
     LivingEntityUseItemStartEvent, LootFunctionEvent, LootTableLoadEvent, MayPlaceOnEvent,
     OnUseTickEvent, PerformBonemealEvent, PlayerRespawnedEvent, RandomSource, RandomTickEvent,
-    ServerReloadListenerApplyEvent, ServerTickEvent, TickEvent, UseAnimationEvent,
+    ServerReloadListenerApplyEvent, ServerTickEvent, TickEvent, TooltipEvent, UseAnimationEvent,
     UseDurationEvent, UseItemEvent, UseItemOnEvent,
 };
 
@@ -372,6 +372,10 @@ impl Hooks for Hempdustry {
 
     fn item_model_property(&self, _host: &dyn Host, event: &mut ItemModelPropertyEvent<'_>) {
         smoking::Smoking::item_model_property(event);
+    }
+
+    fn tooltip(&self, host: &dyn Host, event: &mut TooltipEvent<'_>) {
+        self.smoking.tooltip(host, event);
     }
 
     fn living_entity_use_item_start(

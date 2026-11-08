@@ -535,3 +535,168 @@ fn buds_pack_as_their_strain() {
     );
     assert!(catalog.from_buds("minecraft:wheat").is_none());
 }
+
+// Names: `SmokeContents.packedName`, `loadName`, `hashAdditive`, and the lang keys of en_us.
+
+mod names {
+    use serde_json::json;
+
+    use super::catalog;
+    use crate::smoke::data::Catalog;
+    use crate::smoke::name::{
+        BLEND, Labels, Load, PackedName, hash_additive, packed_name, with_line,
+    };
+    use crate::smoke::{SmokeContents, contents::Entry};
+
+    const INDICA: &str = "hempdustry.strain.indica";
+    const HASHISH: &str = "hempdustry.strain.hashish";
+
+    fn load(entries: &[(&str, i32)]) -> SmokeContents {
+        SmokeContents {
+            entries: entries
+                .iter()
+                .map(|&(strain, count)| Entry {
+                    strain: format!("hempdustry:{strain}"),
+                    count,
+                })
+                .collect(),
+        }
+    }
+
+    #[test]
+    fn a_spliff_of_two_buds_is_named_for_the_strain_with_its_level() {
+        let catalog = catalog();
+        let name = packed_name(
+            "hempdustry:spliff",
+            &load(&[("indica", 2)]),
+            Labels::of(&catalog),
+        );
+        assert_eq!(
+            name,
+            Some(PackedName {
+                format: "item.hempdustry.spliff.packed",
+                load: Load::Strain(INDICA),
+                level: Some(2),
+            })
+        );
+    }
+
+    #[test]
+    fn every_glass_is_a_bong_and_one_bud_has_no_numeral() {
+        let catalog = catalog();
+        for item in [
+            "hempdustry:bong",
+            "hempdustry:red_bong",
+            "hempdustry:tinted_bong",
+        ] {
+            let name = packed_name(item, &load(&[("indica", 1)]), Labels::of(&catalog));
+            assert_eq!(
+                name,
+                Some(PackedName {
+                    format: "item.hempdustry.bong.packed",
+                    load: Load::Strain(INDICA),
+                    level: None,
+                }),
+                "{item}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_moon_rock_never_shows_a_level() {
+        let catalog = catalog();
+        let name = packed_name(
+            "hempdustry:moon_rock",
+            &load(&[("indica", 3)]),
+            Labels::of(&catalog),
+        );
+        assert_eq!(
+            name.map(|n| (n.format, n.level)),
+            Some(("item.hempdustry.moon_rock.of", None))
+        );
+    }
+
+    #[test]
+    fn a_plant_with_hash_keeps_the_plant_name_and_the_spliff_says_with_hash() {
+        let catalog = catalog();
+        let labels = Labels::of(&catalog);
+        let contents = load(&[("hashish", 1), ("indica", 2)]);
+        let name = packed_name("hempdustry:spliff", &contents, labels);
+        assert_eq!(
+            name.map(|n| (n.load, n.level)),
+            Some((Load::Strain(INDICA), Some(2)))
+        );
+        assert_eq!(
+            with_line("hempdustry:spliff", &contents, labels),
+            Some(HASHISH)
+        );
+        assert_eq!(
+            with_line("hempdustry:moon_rock", &contents, labels),
+            Some(HASHISH)
+        );
+        assert_eq!(with_line("hempdustry:wooden_pipe", &contents, labels), None);
+    }
+
+    #[test]
+    fn a_tie_between_plant_and_hash_goes_to_the_plant_whatever_the_order() {
+        let catalog = catalog();
+        let labels = Labels::of(&catalog);
+        for contents in [
+            load(&[("hashish", 1), ("indica", 1)]),
+            load(&[("indica", 1), ("hashish", 1)]),
+        ] {
+            let name = packed_name("hempdustry:wooden_pipe", &contents, labels);
+            assert_eq!(name.map(|n| n.load), Some(Load::Strain(INDICA)));
+        }
+    }
+
+    #[test]
+    fn two_plants_or_two_hashes_read_as_mixed() {
+        let catalog = catalog();
+        let labels = Labels::of(&catalog);
+        for contents in [
+            load(&[("indica", 2), ("beldia", 1)]),
+            load(&[("hashish", 1), ("rosin", 1)]),
+        ] {
+            let name = packed_name("hempdustry:spliff", &contents, labels);
+            assert_eq!(name.map(|n| n.load.key()), Some(BLEND));
+            assert_eq!(hash_additive(&contents, labels), None);
+        }
+    }
+
+    #[test]
+    fn an_empty_load_or_another_item_keeps_its_own_name() {
+        let catalog = catalog();
+        let labels = Labels::of(&catalog);
+        assert_eq!(
+            packed_name("hempdustry:spliff", &SmokeContents::default(), labels),
+            None
+        );
+        assert_eq!(
+            packed_name("hempdustry:indica_buds", &load(&[("indica", 1)]), labels),
+            None
+        );
+    }
+
+    #[test]
+    fn a_game_without_the_strain_files_names_the_shipped_strains() {
+        let empty = Catalog::default();
+        let labels = Labels::of(&empty);
+        assert!(matches!(labels, Labels::BuiltIn));
+        let contents = labels.contents(&json!({"entries": [
+            {"strain": "hempdustry:indica", "count": 2},
+            {"strain": "hempdustry:hashish", "count": 1},
+            {"strain": "addon:purple_haze", "count": 5},
+        ]}));
+        assert_eq!(contents, load(&[("indica", 2), ("hashish", 1)]));
+        let name = packed_name("hempdustry:spliff", &contents, labels);
+        assert_eq!(
+            name.map(|n| (n.load, n.level)),
+            Some((Load::Strain(INDICA), Some(2)))
+        );
+        assert_eq!(
+            with_line("hempdustry:spliff", &contents, labels),
+            Some(HASHISH)
+        );
+    }
+}

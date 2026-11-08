@@ -52,9 +52,11 @@ vaporizer, with each strain's effects at the dose's level and length, Beldía's 
 they share, the green-out and its lock-out, the charges and wear (Unbreaking counted), the
 vaporizer's scorched hemp, and the smoking advancements. The build rewrites the devices' item
 definitions so Horizon draws them packed (it reads `has_component` for vanilla's components only).
-Still to come: packing a device in a crafting grid (Horizon's crafting hook doesn't see the grid
-yet), the packed names and tooltips, per-strain tints, the cooldown overlay, Jelly Legs, the
-standing bong, edibles and the config file.
+A loaded smokeable or moon rock is named for its load in its tooltip ("Purple Kush Bong III",
+"Mixed Vaporizer"), with "With Hashish" under a spliff or moon rock that carries hash; Horizon has
+no item-name hook, so the line above the hotbar keeps the plain name. Still to come: packing a
+device in a crafting grid (Horizon's crafting hook doesn't see the grid yet), per-strain tints,
+the cooldown overlay, Jelly Legs, the standing bong, edibles and the config file.
 
 ## Licence
 

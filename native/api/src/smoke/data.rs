@@ -84,6 +84,10 @@ impl SmokeEffect {
 pub struct Strain {
     /// `hempdustry:indica`.
     pub id: String,
+    /// `translation_key`: the lang key of its name, `hempdustry.strain.indica`.
+    pub translation_key: String,
+    /// `color`: the packed tint, as RGB.
+    pub color: i32,
     /// The item that packs as this strain (`buds`).
     pub buds: String,
     /// `flower`: present for a strain that grows on a plant, absent for hash and the like
@@ -96,11 +100,14 @@ pub struct Strain {
 }
 
 impl Strain {
-    /// `Strain.CODEC`: `buds` is required; a file without it is no strain.
+    /// `Strain.CODEC`: `translation_key`, `color` and `buds` are required; a file without one
+    /// is no strain.
     #[must_use]
     pub fn parse(id: &str, value: &Value) -> Option<Self> {
         Some(Self {
             id: namespaced(id),
+            translation_key: value["translation_key"].as_str()?.to_owned(),
+            color: int(&value["color"])?,
             buds: namespaced(value["buds"].as_str()?),
             flower: value["flower"].as_str().map(namespaced),
             green_out_factor: float(&value["green_out_factor"]).unwrap_or(1.0),
@@ -438,7 +445,8 @@ mod tests {
     fn a_strain_file_reads_with_the_codecs_defaults() {
         let schwag = Strain::parse(
             "hempdustry:schwag",
-            &json!({"buds":"hempdustry:schwag","cough_factor":0.5,"green_out_factor":0.0,
+            &json!({"buds":"hempdustry:schwag","color":9202236,"translation_key":"hempdustry.strain.schwag",
+                "cough_factor":0.5,"green_out_factor":0.0,
                 "effects":[{"chance":0.6,"duration_factor":0.14285715,"effect":"minecraft:poison",
                     "max_amplifier":1},{"effect":"minecraft:hunger"}]}),
         )
@@ -448,7 +456,15 @@ mod tests {
         assert_eq!(schwag.effects[0].max_amplifier, 1);
         assert_eq!(schwag.effects[1].max_amplifier, SmokeEffect::NO_CAP);
         assert!(schwag.effects[1].scales);
-        assert!(Strain::parse("x:y", &json!({"color": 1})).is_none());
+        assert_eq!(schwag.translation_key, "hempdustry.strain.schwag");
+        // Each required field missing in turn.
+        for missing in ["buds", "color", "translation_key"] {
+            let mut file = json!({"buds": "x:b", "color": 1, "translation_key": "k"});
+            if let Some(fields) = file.as_object_mut() {
+                fields.remove(missing);
+            }
+            assert!(Strain::parse("x:y", &file).is_none(), "{missing}");
+        }
     }
 
     #[test]

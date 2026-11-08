@@ -12,15 +12,21 @@ pub mod farm;
 mod host;
 mod level;
 mod loot;
+pub mod smoke;
+mod smoking;
 mod states;
 
 use std::sync::{Mutex, OnceLock, PoisonError};
 
 use horizon_client::mod_api::{
-    CanSurviveEvent, DestroyBlockEvent, Flow, Hooks, Host, IsBonemealSuccessEvent,
-    IsValidBonemealTargetEvent, ItemStack, LevelDimension, LevelHost, LevelRandomHost,
-    LevelTickPostEvent, LevelWriteHost, LootFunctionEvent, LootTableLoadEvent, MayPlaceOnEvent,
-    PerformBonemealEvent, RandomSource, RandomTickEvent, TickEvent, UseItemOnEvent,
+    AddServerReloadListenersEvent, CanSurviveEvent, ComponentTypesEvent, DestroyBlockEvent, Flow,
+    Hooks, Host, InventoryTickEvent, IsBonemealSuccessEvent, IsValidBonemealTargetEvent,
+    ItemModelPropertyEvent, ItemStack, LevelDimension, LevelHost, LevelRandomHost,
+    LevelTickPostEvent, LevelWriteHost, LivingEntityUseItemFinishEvent,
+    LivingEntityUseItemStartEvent, LootFunctionEvent, LootTableLoadEvent, MayPlaceOnEvent,
+    OnUseTickEvent, PerformBonemealEvent, PlayerRespawnedEvent, RandomSource, RandomTickEvent,
+    ServerReloadListenerApplyEvent, ServerTickEvent, TickEvent, UseAnimationEvent,
+    UseDurationEvent, UseItemEvent, UseItemOnEvent,
 };
 
 use farm::harvest;
@@ -58,6 +64,7 @@ struct Hempdustry {
     defaults: OnceLock<Defaults>,
     states: OnceLock<States>,
     queue: Mutex<Vec<Job>>,
+    smoking: smoking::Smoking,
 }
 
 impl Hempdustry {
@@ -326,5 +333,76 @@ impl Hooks for Hempdustry {
             loot::SPOILED => event.stack.count = loot::take_spoiled(),
             _ => {}
         }
+    }
+
+    // Smoking (`smoking`): the components, the data, a hit from each smokeable, the bong's
+    // draw, the exhale and the shared cooldown.
+
+    fn component_types(&self, event: &mut ComponentTypesEvent<'_>) {
+        smoking::Smoking::component_types(event);
+    }
+
+    fn add_server_reload_listeners(
+        &self,
+        _host: &mut dyn Host,
+        event: &mut AddServerReloadListenersEvent<'_>,
+    ) {
+        smoking::Smoking::add_reload_listeners(event);
+    }
+
+    fn server_reload_listener_apply(
+        &self,
+        _host: &mut dyn Host,
+        event: &mut ServerReloadListenerApplyEvent<'_>,
+    ) {
+        self.smoking.reload(event);
+    }
+
+    fn use_item(&self, host: &mut dyn Host, event: &mut UseItemEvent<'_>) -> Flow {
+        self.smoking.use_item(host, event)
+    }
+
+    fn use_duration(&self, host: &dyn Host, event: &mut UseDurationEvent<'_>) {
+        smoking::Smoking::use_duration(host, event);
+    }
+
+    fn use_animation(&self, host: &dyn Host, event: &mut UseAnimationEvent<'_>) {
+        smoking::Smoking::use_animation(host, event);
+    }
+
+    fn item_model_property(&self, _host: &dyn Host, event: &mut ItemModelPropertyEvent<'_>) {
+        smoking::Smoking::item_model_property(event);
+    }
+
+    fn living_entity_use_item_start(
+        &self,
+        host: &mut dyn Host,
+        event: &mut LivingEntityUseItemStartEvent<'_>,
+    ) -> Flow {
+        self.smoking.use_start(host, event)
+    }
+
+    fn on_use_tick(&self, host: &mut dyn Host, event: &mut OnUseTickEvent<'_>) {
+        smoking::Smoking::use_tick(host, event);
+    }
+
+    fn living_entity_use_item_finish(
+        &self,
+        host: &mut dyn Host,
+        event: &mut LivingEntityUseItemFinishEvent<'_>,
+    ) {
+        self.smoking.use_finish(host, event);
+    }
+
+    fn inventory_tick(&self, host: &mut dyn Host, event: &mut InventoryTickEvent) {
+        smoking::Smoking::inventory_tick(host, event);
+    }
+
+    fn server_tick(&self, host: &mut dyn Host, event: &mut ServerTickEvent<'_>) {
+        self.smoking.server_tick(host, event);
+    }
+
+    fn player_respawned(&self, _host: &mut dyn Host, event: &mut PlayerRespawnedEvent<'_>) {
+        self.smoking.respawned(event);
     }
 }

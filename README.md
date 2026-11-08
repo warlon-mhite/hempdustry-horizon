@@ -9,7 +9,7 @@ the Java repository, and its behaviour written again in Rust.
 | Part | What | Status |
 |---|---|---|
 | Content (`.hmod`) | Every block, item, recipe, loot table, tag, advancement, model, texture, sound and translation | Builds; every block places and draws |
-| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Farming (`native/`): unit-tested, and played in a game on Horizon `2ebf00a` |
+| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Farming and smoking (`native/`): unit-tested, and played in a game on Horizon `2ebf00a` |
 
 ## How it is built
 
@@ -34,17 +34,27 @@ Worlds stay compatible with the Java mod on Minecraft 26.3: the same ids, block 
 
 `native/` is a Horizon trait mod with the same id, `hempdustry`. `native/api/src/farm/` holds the Java
 mod's farming rules as plain Rust with no Horizon types (growth, light records, stress, mildew, the
-Grow Pot and Hydro Tray, trimming, bone meal, harvesting), tested on their own with `cargo test` in
-`native/api`; the rest of the crate wires them to Horizon's hooks. Building it into a game is
-`horizon-launcher native-build native --instance <instance> --trust-native-code`, which compiles
-Horizon with the mod linked in: trusting native code is the player's decision.
+Grow Pot and Hydro Tray, trimming, bone meal, harvesting), and `native/api/src/smoke/` its smoking
+rules (strains, devices and the green-out read from the same data files, a hit, the exhale, wear),
+tested on their own with `cargo test` in `native/api`; the rest of the crate wires them to
+Horizon's hooks. Building it into a game is `horizon-launcher native-build native --instance
+<instance> --trust-native-code`, which compiles Horizon with the mod linked in: trusting native code
+is the player's decision.
 
 Played in a game: seeds, growth to two and three blocks and the height a roof leaves, bone meal,
 the Grow Pot and Hydro Tray (bottle, bucket, bone meal), both trims and the shears' wear, harvest
 from every block and from the bed with Fortune, buds and their spoiling, and the Top Shelf
 advancement. Still to come in this part: sulfur gas, Beldía's placement check, the tray's pump,
-the grow lamp's ceiling rule, particles and the config file. Smoking items (bongs, pipe, vaporizer)
-have no item model until the native mod registers their `hempdustry:smoke_contents` component.
+the grow lamp's ceiling rule, particles and the config file.
+
+Smoking, played in a game: a hit from the spliff, the pipe, the bongs (drawn on, as in Java) and the
+vaporizer, with each strain's effects at the dose's level and length, Beldía's exhale, the cooldown
+they share, the green-out and its lock-out, the charges and wear (Unbreaking counted), the
+vaporizer's scorched hemp, and the smoking advancements. The build rewrites the devices' item
+definitions so Horizon draws them packed (it reads `has_component` for vanilla's components only).
+Still to come: packing a device in a crafting grid (Horizon's crafting hook doesn't see the grid
+yet), the packed names and tooltips, per-strain tints, the cooldown overlay, Jelly Legs, the
+standing bong, edibles and the config file.
 
 ## Licence
 

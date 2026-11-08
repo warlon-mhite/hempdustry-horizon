@@ -11,6 +11,7 @@
 The Java repository stays the one source of the mod's data and art: nothing of it is copied into
 this repository. What is here is what Horizon needs on top (content/) and the tools that make it.
 """
+import json
 import os
 import shutil
 import subprocess
@@ -94,6 +95,7 @@ def stage():
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_bytes(t.extractfile(m).read())
             count += 1
+    rewritten = rewrite_item_definitions(STAGE)
     over = 0
     for src in (ROOT / "content").rglob("*"):
         if src.is_file():
@@ -110,7 +112,43 @@ def stage():
         f'api = "0.2"\n'
         f'side = "both"\n'
         f'capabilities = ["registries"]\n')
-    print(f"stage: {count} files from {cfg['commit']}, {over} from content/, in {STAGE}")
+    print(f"stage: {count} files from {cfg['commit']} ({rewritten} item definitions rewritten), "
+          f"{over} from content/, in {STAGE}")
+
+
+# The data components the Java mod registers in code; the native mod registers them on Horizon.
+CODE_COMPONENTS = {"smoke_contents", "potency", "charges", "cooldown_until", "strength", "quality"}
+
+
+def rewrite_item_definitions(stage_dir):
+    """Horizon reads a `minecraft:has_component` condition only for vanilla's components and refuses
+    the whole item definition otherwise. Each one on a component of ours becomes the custom
+    property `hempdustry:has/<component>`, which Horizon asks the native mod (its
+    `item_model_property` hook) and which answers it the same way. Returns how many files changed."""
+    def walk(node):
+        if isinstance(node, list):
+            return [walk(n) for n in node]
+        if not isinstance(node, dict):
+            return node
+        node = {k: walk(v) for k, v in node.items()}
+        component = node.get("component", "")
+        if (node.get("type") == "minecraft:condition"
+                and node.get("property") == "minecraft:has_component"
+                and component.startswith("hempdustry:")
+                and component.split(":", 1)[1] in CODE_COMPONENTS):
+            node["property"] = "hempdustry:has/" + component.split(":", 1)[1]
+            node.pop("component")
+            node.pop("ignore_default", None)
+        return node
+
+    changed = 0
+    for path in sorted(stage_dir.glob("assets/*/items/*.json")):
+        before = json.loads(path.read_text())
+        after = walk(before)
+        if after != before:
+            path.write_text(json.dumps(after, indent=2) + "\n")
+            changed += 1
+    return changed
 
 
 def hmod():

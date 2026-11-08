@@ -9,7 +9,7 @@ the Java repository, and its behaviour written again in Rust.
 | Part | What | Status |
 |---|---|---|
 | Content (`.hmod`) | Every block, item, recipe, loot table, tag, advancement, model, texture, sound and translation | Builds; every block places and draws |
-| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Farming written and unit-tested (`native/`); not yet played in a game |
+| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Farming (`native/`): unit-tested, and played in a game on Horizon `2ebf00a` |
 
 ## How it is built
 
@@ -38,6 +38,13 @@ Grow Pot and Hydro Tray, trimming, bone meal, harvesting), tested on their own w
 `native/api`; the rest of the crate wires them to Horizon's hooks. Building it into a game is
 `horizon-launcher native-build native --instance <instance> --trust-native-code`, which compiles
 Horizon with the mod linked in: trusting native code is the player's decision.
+
+Played in a game: seeds, growth to two and three blocks and the height a roof leaves, bone meal,
+the Grow Pot and Hydro Tray (bottle, bucket, bone meal), both trims and the shears' wear, harvest
+from every block and from the bed with Fortune, buds and their spoiling, and the Top Shelf
+advancement. Still to come in this part: sulfur gas, Beldía's placement check, the tray's pump,
+the grow lamp's ceiling rule, particles and the config file. Smoking items (bongs, pipe, vaporizer)
+have no item model until the native mod registers their `hempdustry:smoke_contents` component.
 
 ## Licence
 

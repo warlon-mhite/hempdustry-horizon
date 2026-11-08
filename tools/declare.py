@@ -65,6 +65,15 @@ SIGNS = {
 ITEM_TEMPLATES = {"indica_seeds": "wheat_seeds", "sativa_seeds": "wheat_seeds", "beldia_seeds": "wheat_seeds"}
 DEFAULT_ITEM_TEMPLATE = "stick"
 
+# Java behaviour written as an item override (`finishUsingItem`), restated as the vanilla components
+# that do the same and merged over the item's own. Hemp milk: vanilla milk's clear, and the bucket back.
+ITEM_BEHAVIOUR = {
+    "hemp_milk_bucket": {
+        "minecraft:consumable": {"on_consume_effects": [{"type": "minecraft:clear_all_effects"}]},
+        "minecraft:use_remainder": {"id": "minecraft:bucket"},
+    },
+}
+
 
 def parse_state(key):
     return dict(kv.split("=", 1) for kv in key.split(",")) if key else {}
@@ -244,12 +253,18 @@ def item_decl(facts, vanilla_items, iid, item):
     decl = {"template": template}
     if item.get("block"):
         decl["place_block"] = item["block"]
-    patch = component_patch(item["components"], vanilla_items[template])
+    components = dict(item["components"])
+    for k, v in ITEM_BEHAVIOUR.get(name, {}).items():
+        components[k] = {**components.get(k, {}), **v}
+    patch = component_patch(components, vanilla_items[template])
     # An item file names these two outside its components (a block file keeps them inside).
     if "minecraft:max_stack_size" in patch:
         decl["max_stack_size"] = patch.pop("minecraft:max_stack_size")
     if "minecraft:rarity" in patch:
         decl["rarity"] = patch.pop("minecraft:rarity")
+    # Horizon reads the remainder by item, never from the template.
+    if item.get("crafting_remainder"):
+        decl["crafting_remainder"] = item["crafting_remainder"]
     if patch:
         decl["components"] = patch
     return decl

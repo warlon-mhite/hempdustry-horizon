@@ -1,6 +1,7 @@
 {
   "template": "minecraft:stick",
   "max_stack_size": 1,
+  "crafting_remainder": "minecraft:bucket",
   "components": {
     "minecraft:item_name": {
       "translate": "item.hempdustry.hemp_milk_bucket"
@@ -9,7 +10,15 @@
     "minecraft:consumable": {
       "animation": "drink",
       "sound": "minecraft:entity.generic.drink",
-      "has_consume_particles": false
+      "has_consume_particles": false,
+      "on_consume_effects": [
+        {
+          "type": "minecraft:clear_all_effects"
+        }
+      ]
+    },
+    "minecraft:use_remainder": {
+      "id": "minecraft:bucket"
     },
     "!minecraft:cooking_fuel": {}
   }

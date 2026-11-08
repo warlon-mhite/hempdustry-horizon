@@ -347,6 +347,12 @@ public final class FactsExporter implements ModInitializer {
                 if (item instanceof BlockItem bi) {
                     json.name("block").value(BuiltInRegistries.BLOCK.getKey(bi.getBlock()).toString());
                 }
+                // What a recipe leaves in the grid: Item.Properties.craftRemainder, not a component.
+                var remainder = item.getCraftingRemainder();
+                if (remainder != null) {
+                    json.name("crafting_remainder")
+                            .value(BuiltInRegistries.ITEM.getKey(remainder.item().value()).toString());
+                }
                 var food = stack.get(net.minecraft.core.component.DataComponents.FOOD);
                 if (food != null) {
                     json.name("food");

@@ -1,6 +1,7 @@
 //! The machines ([`crate::machine`]) wired to Horizon: each one's block entity, its container and
 //! hopper faces, its tick, its menu's slot rules and shift-clicks, and its screen: the
-//! Decarboxylator here, the Infuser in [`infuser`].
+//! Decarboxylator here, the Infuser in [`infuser`]. The Sifting Box ([`sifting`]) is a vessel with
+//! no block entity, and the cauldron ([`cauldron`]) is vanilla's.
 //!
 //! Burn times: a native mod can't ask Horizon how long an item burns, so the items' default
 //! components are read as Horizon loads them (`modify_default_components`) and the burn-time
@@ -8,7 +9,7 @@
 //! Our own burn times are written out in the same hook, so vanilla's furnaces burn hemp too.
 
 use std::collections::HashMap;
-use std::sync::{Arc, PoisonError, RwLock};
+use std::sync::{Arc, Mutex, PoisonError, RwLock};
 
 use crate::machine::decarb::{self, Kitchen, Oven};
 use crate::machine::fuel::{self, ItemFacts, Providers};
@@ -24,6 +25,7 @@ use infuser::INFUSER;
 
 pub(crate) mod cauldron;
 pub(crate) mod infuser;
+pub(crate) mod sifting;
 
 /// The Decarboxylator: its block, its block entity type and its menu type share the id.
 pub(crate) const DECARBOXYLATOR: &str = "hempdustry:decarboxylator";
@@ -72,6 +74,9 @@ pub(crate) struct Machines {
     recipes: RwLock<Arc<Recipes>>,
     infusing: RwLock<Arc<infuser::Recipes>>,
     tubs: RwLock<infuser::Tubs>,
+    settling: Mutex<Vec<sifting::Settling>>,
+    /// Players whose click a box took, and the game time it did.
+    claims: Mutex<HashMap<u128, i64>>,
 }
 
 /// The game's answers, as the oven asks them.

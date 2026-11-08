@@ -172,6 +172,7 @@ impl Hooks for Hempdustry {
     }
 
     fn level_tick_post(&self, host: &mut dyn Host, event: &mut LevelTickPostEvent<'_>) {
+        self.machines.settle_boxes(host, event.dimension);
         let jobs = self.take(event.dimension);
         let Some(states) = self.states.get() else {
             return;
@@ -378,6 +379,10 @@ impl Hooks for Hempdustry {
     }
 
     fn use_item(&self, host: &mut dyn Host, event: &mut UseItemEvent<'_>) -> Flow {
+        // What the client sends after a click a Sifting Box took: Java's client never would.
+        if self.machines.took_click(host) {
+            return Flow::Cancel;
+        }
         self.smoking.use_item(host, event)
     }
 
@@ -487,14 +492,17 @@ impl Hooks for Hempdustry {
         machines::Machines::screen_draw(host, event);
     }
 
-    // The Infuser's pour, by hand or by a dispenser, its spill when exploded, and its comparator.
+    // The Infuser's pour, by hand or by a dispenser, its spill when exploded, and its comparator;
+    // the Sifting Box's click, settle and comparator.
 
     fn right_click_block_v2(
         &self,
         host: &mut dyn Host,
         event: &mut RightClickBlockV2Event,
     ) -> Flow {
-        if self.edibles.cake_click(&self.smoking, host, event) == Flow::Cancel {
+        if self.edibles.cake_click(&self.smoking, host, event) == Flow::Cancel
+            || self.machines.sifting_box_click(host, event) == Flow::Cancel
+        {
             return Flow::Cancel;
         }
         self.machines.infuser_right_click(host, event)
@@ -514,9 +522,11 @@ impl Hooks for Hempdustry {
 
     fn has_analog_output(&self, level: &dyn LevelHost, event: &mut HasAnalogOutputEvent) {
         machines::Machines::infuser_has_analog_output(level, event);
+        machines::Machines::sifting_box_has_analog_output(level, event);
     }
 
     fn analog_output(&self, level: &dyn LevelHost, event: &mut AnalogOutputEvent) {
         self.machines.infuser_analog_output(level, event);
+        machines::Machines::sifting_box_analog_output(level, event);
     }
 }

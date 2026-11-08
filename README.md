@@ -9,7 +9,7 @@ the Java repository, and its behaviour written again in Rust.
 | Part | What | Status |
 |---|---|---|
 | Content (`.hmod`) | Every block, item, recipe, loot table, tag, advancement, model, texture, sound and translation | Builds; every block places and draws |
-| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Farming, smoking, eating, the Decarboxylator, the Infuser and the water cauldron (`native/`): unit-tested, and played in a game on Horizon `2ebf00a` |
+| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Farming, smoking, eating, the Decarboxylator, the Infuser, the Sifting Box and the water cauldron (`native/`): unit-tested, and played in a game on Horizon `2ebf00a` |
 
 ## How it is built
 
@@ -79,7 +79,7 @@ state, shift-clicks, its own screen with the flame and the three arrows, and its
 when broken. Worlds keep its block data in the Java mod's keys. Horizon resolves only Minecraft's
 own burn-time references, so the native mod writes the mod's fuel times out: hemp burns in a
 vanilla furnace too. Still to come here: the oven's crackle and smoke, an anvil name on its screen,
-the Hemp Press and the Sifting Box.
+and the Hemp Press.
 
 The Infuser, played in a game: heat from the block below (a campfire, a lit furnace or oven, magma,
 lava), milk poured by hand or by a dispenser with the empty handed back, hemp fed by hand or by
@@ -92,6 +92,12 @@ back its dissolved hemp but never the butter. Still to come: its bubbles, steam 
 The water cauldron, played in a game: decarboxylated hemp washes and hemp stems ret in it, one
 for one, water charged by the amount (a full cauldron washes a stack of 64) and what doesn't fit
 in the inventory dropped at the player's feet.
+
+The Sifting Box, played in a game: buds and leaves over a dry screen into nine kief, kief re-sifted
+into nine filtered kief, a bucket of water turning it into an ice-water wash that runs only inside a
+jacket of ice and at that jacket's rate, into nine bubble hash; the screen settling a second after it
+fills, the batch taken with an empty hand, plant matter and powder kept apart with a line on the
+action bar saying why, a comparator reading the level. Still to come: the frost while it washes.
 
 ## Licence
 

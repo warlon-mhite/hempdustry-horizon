@@ -1,6 +1,6 @@
 //! The machines' rules, as the Java mod plays them, with no Horizon host: the water cauldron
-//! ([`cauldron`]), the Decarboxylator ([`decarb`]), the Infuser ([`infuser`]) and furnace fuel
-//! ([`fuel`]). `crate::machines` wires them to Horizon's hooks.
+//! ([`cauldron`]), the Decarboxylator ([`decarb`]), the Infuser ([`infuser`]), the Sifting Box
+//! ([`sifting`]) and furnace fuel ([`fuel`]). `crate::machines` wires them to Horizon's hooks.
 
 use std::ops::Range;
 
@@ -10,6 +10,7 @@ pub mod cauldron;
 pub mod decarb;
 pub mod fuel;
 pub mod infuser;
+pub mod sifting;
 
 /// `AbstractContainerMenu.moveItemStackTo` into `range`, front to back: first onto stacks of the
 /// same item, then into empty slots, `max` to a slot. Takes what it moves out of `stack`; returns

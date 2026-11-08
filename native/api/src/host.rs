@@ -405,8 +405,15 @@ impl Hands<'_> {
                     }
                     match &held {
                         None => held = Some(plain(&item, 1)),
-                        Some(_) => give.push(item),
+                        Some(_) => give.push((item, 1)),
                     }
+                }
+                // Vanilla's creative rule for an exchange: nothing spent, one handed over if
+                // the player has none.
+                Effect::Exchange { into, .. } if creative => give.push((into.into(), 1)),
+                Effect::Exchange { count, into } => {
+                    held = held.and_then(|stack| fewer(stack, count));
+                    give.push((into.into(), count));
                 }
                 Effect::DamageHeld | Effect::ConsumeHeld => {}
                 Effect::Drop { pos, item, count } => self.drop_item(pos, item, count),
@@ -463,12 +470,14 @@ impl Hands<'_> {
                 None => stack.count = 0,
             }
         }
-        for item in give {
+        for (item, count) in give {
             if creative && self.host.count_items(&item) > 0 {
                 continue;
             }
-            if self.host.give_items(&item, 1) == 0 {
-                self.drop_item(player_block(player.position), &item, 1);
+            // `placeItemBackInInventory`: what doesn't fit drops at the player's feet.
+            let left = count.saturating_sub(self.host.give_items(&item, count));
+            if left > 0 {
+                self.drop_item(player_block(player.position), &item, left);
             }
         }
     }

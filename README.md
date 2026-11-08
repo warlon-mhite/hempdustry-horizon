@@ -77,6 +77,10 @@ into the container it faces once it can get no better, the comparator reading th
 progress, its screen with the bar, the two marks, the milk and the flame, and a broken tub giving
 back its dissolved hemp but never the butter. Still to come: its bubbles, steam and simmer sound.
 
+The water cauldron, played in a game: decarboxylated hemp washes and hemp stems ret in it, one
+for one, water charged by the amount (a full cauldron washes a stack of 64) and what doesn't fit
+in the inventory dropped at the player's feet.
+
 ## Licence
 
 Code and data AGPL-3.0-only, art and music CC-BY-NC-SA-4.0, as the Java mod (see its `CREDITS.md`).

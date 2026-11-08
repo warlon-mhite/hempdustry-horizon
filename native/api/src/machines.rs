@@ -22,6 +22,7 @@ use horizon_client::mod_api::{
 };
 use infuser::INFUSER;
 
+pub(crate) mod cauldron;
 pub(crate) mod infuser;
 
 /// The Decarboxylator: its block, its block entity type and its menu type share the id.

@@ -1,11 +1,12 @@
-//! The machines' rules, as the Java mod plays them, with no Horizon host: the Decarboxylator
-//! ([`decarb`]), the Infuser ([`infuser`]) and furnace fuel ([`fuel`]). `crate::machines` wires
-//! them to Horizon's hooks.
+//! The machines' rules, as the Java mod plays them, with no Horizon host: the water cauldron
+//! ([`cauldron`]), the Decarboxylator ([`decarb`]), the Infuser ([`infuser`]) and furnace fuel
+//! ([`fuel`]). `crate::machines` wires them to Horizon's hooks.
 
 use std::ops::Range;
 
 use horizon_client::mod_api::ItemStack;
 
+pub mod cauldron;
 pub mod decarb;
 pub mod fuel;
 pub mod infuser;

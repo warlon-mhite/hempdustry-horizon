@@ -37,6 +37,10 @@ pub enum Effect {
     /// The held stack emptied (`ItemUtils.createFilledResult`): a water bottle into a glass
     /// bottle, a water bucket into a bucket, a milk into what it leaves.
     EmptyHeld(Cow<'static, str>),
+    /// `count` of the held stack soaked into as many `into`, a cauldron's wash: they come back
+    /// where they fit (`placeItemBackInInventory`). A creative player spends nothing and gets one
+    /// if they have none.
+    Exchange { count: u32, into: &'static str },
     /// `count` of `item` dropped at `pos` (`Block.popResource`).
     Drop {
         pos: Pos,

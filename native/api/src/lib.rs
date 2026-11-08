@@ -267,6 +267,10 @@ impl Hooks for Hempdustry {
     }
 
     fn use_item_on(&self, host: &mut dyn Host, event: &mut UseItemOnEvent<'_>) -> Flow {
+        // A water cauldron washes hemp and rets stems (`ModCauldronBehaviors`).
+        if machines::cauldron::use_on(host, event) == Flow::Cancel {
+            return Flow::Cancel;
+        }
         let Some(states) = self.states.get() else {
             return Flow::Continue;
         };

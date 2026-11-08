@@ -6,11 +6,13 @@ use horizon_client::mod_api::LevelHost;
 
 use crate::farm::World;
 use crate::farm::model::{Block, Kind, LightSource, Pos};
-use crate::states::States;
+use crate::states::{Soil, States};
 
 pub(crate) struct LevelWorld<'a> {
     pub level: &'a dyn LevelHost,
     pub states: &'a States,
+    /// None until the server has read the tag.
+    pub soil: Option<&'a Soil>,
 }
 
 impl World for LevelWorld<'_> {
@@ -36,7 +38,8 @@ impl World for LevelWorld<'_> {
     }
 
     fn is_beldia_soil(&self, pos: Pos) -> bool {
-        self.states.is_soil(self.level.block_state(pos))
+        let id = self.level.block_state(pos);
+        self.soil.is_some_and(|soil| soil.contains(id))
     }
 
     fn roofed(&self, _pos: Pos) -> bool {

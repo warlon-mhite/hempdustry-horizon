@@ -4,7 +4,8 @@
 //! bare [`BlockStateId`] and can only ask for the same block with one property changed. So the
 //! table is built in two steps: the default state of every block the rules name, from the first
 //! tick's host ([`Defaults::read`]), then every state of those blocks, by walking their
-//! properties from the default in the first level hook ([`States::build`]).
+//! properties from the default in the first level hook ([`States::build`]). Beldía's soil is a
+//! tag, which only the server can read: [`Soil`], from the server's tick.
 
 use std::collections::{HashMap, HashSet};
 
@@ -15,8 +16,9 @@ use crate::farm::model::{Block, Condition, Kind, Mildew, Plant, Pot, Segment, Tr
 const AIR: [&str; 3] = ["minecraft:air", "minecraft:cave_air", "minecraft:void_air"];
 const FARMLAND: &str = "minecraft:farmland";
 const WATER: &str = "minecraft:water";
+const BELDIA_SOIL: &str = "hempdustry:beldia_soil";
 /// The blocks a Beldía seed is tried against before a world's tag is read; each is kept only
-/// when `#hempdustry:beldia_soil` holds it.
+/// when `#hempdustry:beldia_soil` holds it ([`Soil`]).
 const SOIL_CANDIDATES: [&str; 3] = [
     "minecraft:sand",
     "minecraft:red_sand",
@@ -33,7 +35,6 @@ pub(crate) struct Defaults {
     farmland: BlockStateId,
     air: Vec<BlockStateId>,
     water: BlockStateId,
-    soil: Vec<BlockStateId>,
 }
 
 impl Defaults {
@@ -44,14 +45,6 @@ impl Defaults {
             .into_iter()
             .map(|kind| Some((kind, state(kind.block())?)))
             .collect::<Option<Vec<_>>>()?;
-        let soil = SOIL_CANDIDATES
-            .into_iter()
-            .filter(|name| {
-                host.block_name_in_tag(name, "hempdustry:beldia_soil")
-                    .unwrap_or(false)
-            })
-            .filter_map(state)
-            .collect();
         Some(Self {
             crops,
             pot: state(Pot::BLOCK)?,
@@ -59,8 +52,32 @@ impl Defaults {
             farmland: state(FARMLAND)?,
             air: AIR.into_iter().filter_map(state).collect(),
             water: state(WATER)?,
-            soil,
         })
+    }
+}
+
+/// What Beldía stands on: the states of [`SOIL_CANDIDATES`] that `#hempdustry:beldia_soil`
+/// holds. Only a server can ask a tag, and only once its world's tags are loaded, so this is read
+/// on the server's tick rather than with [`Defaults`], whose first ticks are the client's: read
+/// there, every answer was "no" and Beldía could stand nowhere.
+#[derive(Debug, Default)]
+pub(crate) struct Soil(HashSet<BlockStateId>);
+
+impl Soil {
+    /// None until the host can answer for the tag.
+    pub(crate) fn read(host: &dyn Host) -> Option<Self> {
+        let mut soil = HashSet::with_capacity(SOIL_CANDIDATES.len());
+        for name in SOIL_CANDIDATES {
+            if host.block_name_in_tag(name, BELDIA_SOIL).ok()? {
+                soil.extend(host.default_state(name));
+            }
+        }
+        Some(Self(soil))
+    }
+
+    #[must_use]
+    pub(crate) fn contains(&self, id: BlockStateId) -> bool {
+        self.0.contains(&id)
     }
 }
 
@@ -74,7 +91,6 @@ pub(crate) struct States {
     farmland: HashMap<BlockStateId, u8>,
     air: HashSet<BlockStateId>,
     water: HashSet<BlockStateId>,
-    soil: HashSet<BlockStateId>,
 }
 
 /// Every state reached from `start` by setting each `(key, values)` in turn to each value.
@@ -180,7 +196,6 @@ impl States {
             states.water.insert(id);
         }
         states.air.extend(defaults.air.iter().copied());
-        states.soil.extend(defaults.soil.iter().copied());
         states
     }
 
@@ -216,10 +231,5 @@ impl States {
     #[must_use]
     pub(crate) fn is_water(&self, id: BlockStateId) -> bool {
         self.water.contains(&id)
-    }
-
-    #[must_use]
-    pub(crate) fn is_soil(&self, id: BlockStateId) -> bool {
-        self.soil.contains(&id)
     }
 }

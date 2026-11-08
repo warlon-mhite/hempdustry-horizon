@@ -45,7 +45,7 @@ use farm::model::{Block, Pos, above};
 use farm::{Config, plant};
 use host::{HostWorld, StateText};
 use level::LevelWorld;
-use states::{Defaults, States};
+use states::{Defaults, Soil, States};
 
 /// The game calls this once, at start.
 #[must_use]
@@ -73,6 +73,7 @@ struct Job {
 struct Hempdustry {
     defaults: OnceLock<Defaults>,
     states: OnceLock<States>,
+    soil: OnceLock<Soil>,
     queue: Mutex<Vec<Job>>,
     smoking: smoking::Smoking,
     edibles: edibles::Edibles,
@@ -196,7 +197,9 @@ impl Hooks for Hempdustry {
         Some(plant::may_stand_on(
             plant,
             ground,
-            states.is_soil(event.ground),
+            self.soil
+                .get()
+                .is_some_and(|soil| soil.contains(event.ground)),
         ))
     }
 
@@ -221,7 +224,11 @@ impl Hooks for Hempdustry {
         let pos = pos_of(event.pos);
         match states.block(event.state) {
             Block::Plant(plant) => {
-                let world = LevelWorld { level, states };
+                let world = LevelWorld {
+                    level,
+                    states,
+                    soil: self.soil.get(),
+                };
                 Some(plant::takes_bone_meal(&world, pos, plant))
             }
             block => Medium::of(block).map(|medium| medium.takes_food(boils_away(event.dimension))),
@@ -429,7 +436,14 @@ impl Hooks for Hempdustry {
         smoking::Smoking::inventory_tick(host, event);
     }
 
+    /// Beldía's soil is read here, once the world's tags answer (a server tick is the first hook that
+    /// can ask them).
     fn server_tick(&self, host: &mut dyn Host, event: &mut ServerTickEvent<'_>) {
+        if self.soil.get().is_none()
+            && let Some(soil) = Soil::read(host)
+        {
+            let _ = self.soil.set(soil);
+        }
         self.smoking.server_tick(host, event);
         self.edibles.server_tick(host, event);
     }

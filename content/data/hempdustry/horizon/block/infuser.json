@@ -1,0 +1,39 @@
+{
+  "template": "minecraft:furnace",
+  "state_properties": {
+    "filled": {
+      "type": "boolean"
+    },
+    "infusing": {
+      "type": "boolean"
+    }
+  },
+  "default_state": {
+    "filled": "false",
+    "infusing": "false"
+  },
+  "properties": {
+    "light": 0,
+    "map_color": 0,
+    "occludes": false
+  },
+  "shapes": {
+    "default": [
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    ]
+  },
+  "components": {
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.infuser"
+    },
+    "minecraft:item_model": "hempdustry:infuser",
+    "!minecraft:container": {}
+  }
+}

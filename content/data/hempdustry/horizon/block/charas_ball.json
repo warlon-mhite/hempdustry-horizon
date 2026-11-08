@@ -1,0 +1,28 @@
+{
+  "template": "minecraft:clay",
+  "properties": {
+    "hardness": 0.5,
+    "explosion_resistance": 0.5,
+    "map_color": 0,
+    "sounds": "minecraft:honey_block",
+    "occludes": false
+  },
+  "shapes": {
+    "default": [
+      [
+        0.25,
+        0.0,
+        0.25,
+        0.75,
+        0.375,
+        0.75
+      ]
+    ]
+  },
+  "components": {
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.charas_ball"
+    },
+    "minecraft:item_model": "hempdustry:charas_ball"
+  }
+}

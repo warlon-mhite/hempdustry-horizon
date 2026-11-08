@@ -1,0 +1,16 @@
+{
+  "template": "minecraft:hay_block",
+  "components": {
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.hemp_bale"
+    },
+    "minecraft:item_model": "hempdustry:hemp_bale",
+    "minecraft:cooking_fuel": {
+      "burn_time": "hempdustry:cooking/time_450",
+      "speed_multiplier": "minecraft:cooking/speed_default"
+    },
+    "minecraft:compostable": {
+      "layers": "hempdustry:compostable/chance_85"
+    }
+  }
+}

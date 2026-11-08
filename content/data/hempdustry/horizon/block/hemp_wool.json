@@ -1,0 +1,16 @@
+{
+  "template": "minecraft:white_wool",
+  "properties": {
+    "map_color": 36
+  },
+  "components": {
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.hemp_wool"
+    },
+    "minecraft:item_model": "hempdustry:hemp_wool",
+    "minecraft:cooking_fuel": {
+      "burn_time": "hempdustry:cooking/time_100",
+      "speed_multiplier": "minecraft:cooking/speed_default"
+    }
+  }
+}

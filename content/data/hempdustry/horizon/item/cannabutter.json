@@ -1,0 +1,10 @@
+{
+  "template": "minecraft:stick",
+  "components": {
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.cannabutter"
+    },
+    "minecraft:item_model": "hempdustry:cannabutter",
+    "!minecraft:cooking_fuel": {}
+  }
+}

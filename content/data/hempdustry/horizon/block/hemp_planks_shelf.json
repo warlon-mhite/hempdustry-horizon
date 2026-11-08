@@ -1,0 +1,14 @@
+{
+  "template": "minecraft:oak_shelf",
+  "properties": {
+    "map_color": 0
+  },
+  "components": {
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.hemp_planks_shelf"
+    },
+    "minecraft:item_model": "hempdustry:hemp_planks_shelf",
+    "!minecraft:container": {},
+    "!minecraft:cooking_fuel": {}
+  }
+}

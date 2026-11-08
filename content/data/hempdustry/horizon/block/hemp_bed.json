@@ -1,0 +1,12 @@
+{
+  "template": "minecraft:white_bed",
+  "properties": {
+    "map_color": 36
+  },
+  "components": {
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.hemp_bed"
+    },
+    "minecraft:item_model": "hempdustry:hemp_bed"
+  }
+}

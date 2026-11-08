@@ -1,0 +1,46 @@
+{
+  "template": "minecraft:stick",
+  "max_stack_size": 1,
+  "components": {
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.flip_flops"
+    },
+    "minecraft:damage": 0,
+    "minecraft:equippable": {
+      "slot": "feet",
+      "equip_sound": "minecraft:item.armor.equip_leather",
+      "asset_id": "hempdustry:hemp_fiber"
+    },
+    "minecraft:item_model": "hempdustry:flip_flops",
+    "minecraft:attribute_modifiers": [
+      {
+        "type": "minecraft:armor",
+        "id": "minecraft:armor.boots",
+        "amount": 1.0,
+        "operation": "add_value",
+        "slot": "feet"
+      },
+      {
+        "type": "minecraft:armor_toughness",
+        "id": "minecraft:armor.boots",
+        "amount": 0.0,
+        "operation": "add_value",
+        "slot": "feet"
+      }
+    ],
+    "minecraft:cooking_fuel": {
+      "burn_time": "hempdustry:cooking/time_200",
+      "speed_multiplier": "minecraft:cooking/speed_default"
+    },
+    "minecraft:compostable": {
+      "layers": "hempdustry:compostable/chance_50"
+    },
+    "minecraft:repairable": {
+      "items": "#hempdustry:hemp_armor_repair"
+    },
+    "minecraft:max_damage": 65,
+    "minecraft:enchantable": {
+      "value": 20
+    }
+  }
+}

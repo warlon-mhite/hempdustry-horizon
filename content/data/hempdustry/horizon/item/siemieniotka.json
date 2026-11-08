@@ -1,0 +1,19 @@
+{
+  "template": "minecraft:stick",
+  "max_stack_size": 1,
+  "components": {
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.siemieniotka"
+    },
+    "minecraft:use_remainder": {
+      "id": "minecraft:bowl"
+    },
+    "minecraft:item_model": "hempdustry:siemieniotka",
+    "minecraft:consumable": {},
+    "minecraft:food": {
+      "nutrition": 6,
+      "saturation": 7.2000003
+    },
+    "!minecraft:cooking_fuel": {}
+  }
+}

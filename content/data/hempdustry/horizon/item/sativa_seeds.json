@@ -1,0 +1,13 @@
+{
+  "template": "minecraft:wheat_seeds",
+  "place_block": "hempdustry:sativa_crop",
+  "components": {
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.sativa_seeds"
+    },
+    "minecraft:item_model": "hempdustry:sativa_seeds",
+    "minecraft:compostable": {
+      "layers": "hempdustry:compostable/chance_30"
+    }
+  }
+}

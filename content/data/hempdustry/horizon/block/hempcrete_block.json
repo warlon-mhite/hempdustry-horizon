@@ -1,0 +1,13 @@
+{
+  "template": "minecraft:white_concrete",
+  "properties": {
+    "requires_tool": false,
+    "map_color": 0
+  },
+  "components": {
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.hempcrete_block"
+    },
+    "minecraft:item_model": "hempdustry:hempcrete_block"
+  }
+}

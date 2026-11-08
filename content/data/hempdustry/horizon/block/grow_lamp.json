@@ -1,0 +1,45 @@
+{
+  "template": "minecraft:redstone_lamp",
+  "properties": {
+    "hardness": 3.0,
+    "explosion_resistance": 6.0,
+    "requires_tool": true,
+    "map_color": 15,
+    "sounds": "minecraft:copper_bulb",
+    "occludes": false
+  },
+  "shapes": {
+    "default": [
+      [
+        0.0625,
+        0.25,
+        0.0625,
+        0.9375,
+        0.4375,
+        0.9375
+      ],
+      [
+        0.15625,
+        0.4375,
+        0.40625,
+        0.34375,
+        1.0,
+        0.59375
+      ],
+      [
+        0.65625,
+        0.4375,
+        0.40625,
+        0.84375,
+        1.0,
+        0.59375
+      ]
+    ]
+  },
+  "components": {
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.grow_lamp"
+    },
+    "minecraft:item_model": "hempdustry:grow_lamp"
+  }
+}

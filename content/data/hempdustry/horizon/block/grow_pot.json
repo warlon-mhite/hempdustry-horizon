@@ -1,0 +1,78 @@
+{
+  "template": "minecraft:terracotta",
+  "state_properties": {
+    "fertility": {
+      "type": "enum",
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ]
+    },
+    "watered": {
+      "type": "boolean"
+    }
+  },
+  "default_state": {
+    "fertility": "0",
+    "watered": "false"
+  },
+  "properties": {
+    "explosion_resistance": 1.25,
+    "requires_tool": false,
+    "map_color": 40,
+    "sounds": "minecraft:decorated_pot",
+    "occludes": false
+  },
+  "shapes": {
+    "default": [
+      [
+        0.0625,
+        0.0,
+        0.0625,
+        0.9375,
+        1.0,
+        0.9375
+      ],
+      [
+        0.0,
+        0.8125,
+        0.0,
+        0.0625,
+        1.0,
+        1.0
+      ],
+      [
+        0.0625,
+        0.8125,
+        0.0,
+        1.0,
+        1.0,
+        0.0625
+      ],
+      [
+        0.0625,
+        0.8125,
+        0.9375,
+        1.0,
+        1.0,
+        1.0
+      ],
+      [
+        0.9375,
+        0.8125,
+        0.0625,
+        1.0,
+        1.0,
+        0.9375
+      ]
+    ]
+  },
+  "components": {
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.grow_pot"
+    },
+    "minecraft:item_model": "hempdustry:grow_pot"
+  }
+}

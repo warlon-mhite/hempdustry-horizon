@@ -1,0 +1,149 @@
+{
+  "template": "minecraft:wheat",
+  "state_properties": {
+    "condition": {
+      "type": "enum",
+      "values": [
+        "natural",
+        "ambient",
+        "lamp",
+        "grow_lamp",
+        "stressed"
+      ]
+    },
+    "half": {
+      "type": "enum",
+      "values": [
+        "upper",
+        "lower"
+      ]
+    },
+    "mildew": {
+      "type": "enum",
+      "values": [
+        "clean",
+        "sulfured",
+        "mildewed"
+      ]
+    },
+    "rubbed": {
+      "type": "boolean"
+    },
+    "trimmed_early": {
+      "type": "boolean"
+    },
+    "trimmed_late": {
+      "type": "boolean"
+    }
+  },
+  "default_state": {
+    "condition": "natural",
+    "half": "lower",
+    "mildew": "clean",
+    "rubbed": "false",
+    "trimmed_early": "false",
+    "trimmed_late": "false"
+  },
+  "shapes": {
+    "properties": [
+      "age",
+      "half"
+    ],
+    "values": {
+      "0,lower": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.25,
+          1.0
+        ]
+      ],
+      "1,lower": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.375,
+          1.0
+        ]
+      ],
+      "2,lower": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.5,
+          1.0
+        ]
+      ],
+      "3,lower": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.625,
+          1.0
+        ]
+      ],
+      "4,lower": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.8125,
+          1.0
+        ]
+      ],
+      "5,lower": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.9375,
+          1.0
+        ]
+      ],
+      "6,lower": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      ],
+      "7,lower": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      ]
+    },
+    "default": [
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.75,
+        1.0
+      ]
+    ]
+  },
+  "collision_shapes": {
+    "default": []
+  },
+  "item": false
+}

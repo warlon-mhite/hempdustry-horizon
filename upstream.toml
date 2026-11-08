@@ -1,0 +1,7 @@
+# The Java mod this edition is built from: its data and art are read from this commit.
+# The build reads it from a clone of the repository named by HEMPDUSTRY_JAVA.
+repository = "https://github.com/warlon-mhite/hempdustry-fabric"
+branch = "26.3-2.1"
+commit = "eb7ceb56"
+version = "2.1.0-horizon.0"
+description = "Grow, cure and smoke hemp in a world of hemprepreneurs."

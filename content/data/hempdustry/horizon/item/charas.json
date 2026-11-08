@@ -1,0 +1,10 @@
+{
+  "template": "minecraft:stick",
+  "components": {
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.charas"
+    },
+    "minecraft:item_model": "hempdustry:charas",
+    "!minecraft:cooking_fuel": {}
+  }
+}

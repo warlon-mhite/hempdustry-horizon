@@ -1,0 +1,103 @@
+{
+  "template": "minecraft:oak_planks",
+  "state_properties": {
+    "content": {
+      "type": "enum",
+      "values": [
+        "plant",
+        "kief"
+      ]
+    },
+    "filled": {
+      "type": "boolean"
+    },
+    "level": {
+      "type": "enum",
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
+      ]
+    }
+  },
+  "default_state": {
+    "content": "plant",
+    "filled": "false",
+    "level": "0"
+  },
+  "properties": {
+    "hardness": 0.6,
+    "explosion_resistance": 0.6,
+    "map_color": 0,
+    "occludes": false
+  },
+  "shapes": {
+    "default": [
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    ]
+  },
+  "collision_shapes": {
+    "default": [
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.125,
+        1.0
+      ],
+      [
+        0.0,
+        0.125,
+        0.0,
+        0.125,
+        1.0,
+        1.0
+      ],
+      [
+        0.125,
+        0.125,
+        0.0,
+        1.0,
+        1.0,
+        0.125
+      ],
+      [
+        0.125,
+        0.125,
+        0.875,
+        1.0,
+        1.0,
+        1.0
+      ],
+      [
+        0.875,
+        0.125,
+        0.125,
+        1.0,
+        1.0,
+        0.875
+      ]
+    ]
+  },
+  "components": {
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.sifting_box"
+    },
+    "minecraft:item_model": "hempdustry:sifting_box",
+    "!minecraft:cooking_fuel": {}
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "template": "minecraft:stick",
+  "components": {
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.sativa_buds"
+    },
+    "minecraft:item_model": "hempdustry:sativa_buds",
+    "minecraft:compostable": {
+      "layers": "hempdustry:compostable/chance_50"
+    },
+    "!minecraft:cooking_fuel": {}
+  }
+}

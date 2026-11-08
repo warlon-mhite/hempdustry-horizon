@@ -1,0 +1,15 @@
+{
+  "template": "minecraft:brick_stairs",
+  "properties": {
+    "explosion_resistance": 10.0,
+    "requires_tool": false,
+    "map_color": 0,
+    "sounds": "minecraft:oak_planks"
+  },
+  "components": {
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.hemp_bricks_stairs"
+    },
+    "minecraft:item_model": "hempdustry:hemp_bricks_stairs"
+  }
+}

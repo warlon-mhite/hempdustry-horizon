@@ -1,0 +1,11 @@
+{
+  "template": "minecraft:stick",
+  "max_stack_size": 1,
+  "components": {
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.hemp_boat"
+    },
+    "minecraft:item_model": "hempdustry:hemp_boat",
+    "!minecraft:cooking_fuel": {}
+  }
+}

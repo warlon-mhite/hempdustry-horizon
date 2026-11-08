@@ -1,0 +1,8 @@
+{
+  "template": "minecraft:oak_wall_hanging_sign",
+  "properties": {
+    "map_color": 0
+  },
+  "wood_type": "hempdustry:hemp",
+  "item": false
+}

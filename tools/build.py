@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+"""Build Hempdustry for Horizon from the Java mod at the commit upstream.toml pins.
+
+    python3 tools/build.py facts      run the Java mod once and export its facts (needs the checkout
+                                      at the pinned commit, clean, and its Gradle toolchain)
+    python3 tools/build.py declare    write content/data/hempdustry/horizon/ from those facts
+    python3 tools/build.py stage      assemble build/hempdustry/: the pinned assets and data, then
+                                      content/ over them, and the manifest
+    python3 tools/build.py hmod       stage, then pack it with cargo-horizon-mod
+
+The Java repository stays the one source of the mod's data and art: nothing of it is copied into
+this repository. What is here is what Horizon needs on top (content/) and the tools that make it.
+"""
+import os
+import shutil
+import subprocess
+import sys
+import tarfile
+import io
+import tomllib
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+BUILD = ROOT / "build"
+STAGE = BUILD / "hempdustry"
+FACTS = BUILD / "facts.json"
+
+# What the Java repository holds for a resource pack and a data pack, at the pinned commit. The
+# NeoForge folder brings the biome modifiers, which Horizon reads for a mod's worldgen; Fabric adds
+# the same plants in code, which Horizon cannot run.
+UPSTREAM_PATHS = [
+    "common/src/main/resources/assets",
+    "common/src/main/resources/data",
+    "common/src/generated/resources/assets",
+    "common/src/generated/resources/data",
+    "neoforge/src/generated/resources/data",
+]
+
+
+def upstream():
+    cfg = tomllib.loads((ROOT / "upstream.toml").read_text())
+    clone = os.environ.get("HEMPDUSTRY_JAVA")
+    if not clone:
+        sys.exit(f"HEMPDUSTRY_JAVA: a clone of {cfg['repository']} (any branch; the build reads commit {cfg['commit']})")
+    return cfg, Path(clone).resolve()
+
+
+def git(repo, *args, **kw):
+    return subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True, **kw).stdout
+
+
+def facts():
+    cfg, repo = upstream()
+    head = git(repo, "rev-parse", "HEAD", text=True).strip()
+    if not head.startswith(cfg["commit"]):
+        sys.exit(f"{repo} is at {head[:10]}, upstream.toml pins {cfg['commit']}: check it out first")
+    if git(repo, "status", "--porcelain", "--untracked-files=no", text=True).strip():
+        sys.exit(f"{repo} has uncommitted changes: the facts would not be the pinned commit's")
+    run_dir = repo / "fabric" / "build" / "horizon-oracle"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "eula.txt").write_text("eula=true\n")
+    (run_dir / "server.properties").write_text(
+        "server-port=25611\nlevel-type=minecraft\\:flat\nonline-mode=false\nsync-chunk-writes=false\n")
+    BUILD.mkdir(exist_ok=True)
+    subprocess.run(["./gradlew", "--init-script", str(ROOT / "tools/oracle/oracle.gradle"),
+                    ":fabric:runHorizonOracle", f"-Phorizon.oracle.out={FACTS}", "--console=plain"],
+                   cwd=repo, check=True)
+    print(f"facts: {FACTS}")
+
+
+def declare():
+    resources = os.environ.get("HORIZON_RESOURCES")
+    if not resources:
+        sys.exit("HORIZON_RESOURCES: the prepared Horizon resources (.local/horizon-client/26.3)")
+    subprocess.run([sys.executable, "-I", str(ROOT / "tools/declare.py"), str(FACTS),
+                    str(Path(resources) / "items.json"), str(ROOT / "content")], check=True)
+
+
+def stage():
+    cfg, repo = upstream()
+    if STAGE.exists():
+        shutil.rmtree(STAGE)
+    STAGE.mkdir(parents=True)
+    tar = git(repo, "archive", "--format=tar", cfg["commit"], "--", *UPSTREAM_PATHS)
+    count = 0
+    with tarfile.open(fileobj=io.BytesIO(tar)) as t:
+        for m in t.getmembers():
+            if not m.isfile():
+                continue
+            rel = next(m.name[len(p) - len(p.split("/")[-1]):] for p in UPSTREAM_PATHS if m.name.startswith(p + "/"))
+            dest = STAGE / rel
+            if dest.exists():
+                sys.exit(f"{rel}: in two upstream folders")
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(t.extractfile(m).read())
+            count += 1
+    over = 0
+    for src in (ROOT / "content").rglob("*"):
+        if src.is_file():
+            dest = STAGE / src.relative_to(ROOT / "content")
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(src, dest)
+            over += 1
+    (STAGE / "horizon-mod.toml").write_text(
+        f'id = "hempdustry"\n'
+        f'name = "Hempdustry"\n'
+        f'version = "{cfg["version"]}"\n'
+        f'description = "{cfg["description"]}"\n'
+        f'authors = ["Warlon Mhite"]\n'
+        f'api = "0.2"\n'
+        f'side = "both"\n'
+        f'capabilities = ["registries"]\n')
+    print(f"stage: {count} files from {cfg['commit']}, {over} from content/, in {STAGE}")
+
+
+def hmod():
+    stage()
+    tool = os.environ.get("CARGO_HORIZON_MOD", "cargo-horizon-mod")
+    subprocess.run([tool, "horizon-mod", "build"], cwd=STAGE, check=True)
+
+
+if __name__ == "__main__":
+    steps = {"facts": facts, "declare": declare, "stage": stage, "hmod": hmod}
+    if len(sys.argv) != 2 or sys.argv[1] not in steps:
+        sys.exit(__doc__)
+    steps[sys.argv[1]]()

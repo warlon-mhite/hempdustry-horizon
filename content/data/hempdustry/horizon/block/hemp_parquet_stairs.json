@@ -1,0 +1,13 @@
+{
+  "template": "minecraft:oak_stairs",
+  "properties": {
+    "map_color": 0
+  },
+  "components": {
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.hemp_parquet_stairs"
+    },
+    "minecraft:item_model": "hempdustry:hemp_parquet_stairs",
+    "!minecraft:cooking_fuel": {}
+  }
+}

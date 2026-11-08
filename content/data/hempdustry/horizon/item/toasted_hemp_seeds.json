@@ -1,0 +1,17 @@
+{
+  "template": "minecraft:stick",
+  "components": {
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.toasted_hemp_seeds"
+    },
+    "minecraft:item_model": "hempdustry:toasted_hemp_seeds",
+    "minecraft:consumable": {
+      "consume_seconds": 0.8
+    },
+    "minecraft:food": {
+      "nutrition": 2,
+      "saturation": 2.4
+    },
+    "!minecraft:cooking_fuel": {}
+  }
+}

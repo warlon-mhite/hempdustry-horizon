@@ -1,0 +1,19 @@
+{
+  "template": "minecraft:stick",
+  "max_stack_size": 1,
+  "components": {
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.gray_bong"
+    },
+    "minecraft:damage": 0,
+    "minecraft:item_model": "hempdustry:gray_bong",
+    "minecraft:repairable": {
+      "items": "minecraft:gray_stained_glass"
+    },
+    "minecraft:max_damage": 24,
+    "minecraft:enchantable": {
+      "value": 10
+    },
+    "!minecraft:cooking_fuel": {}
+  }
+}

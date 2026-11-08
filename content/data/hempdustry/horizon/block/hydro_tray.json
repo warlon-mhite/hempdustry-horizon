@@ -1,0 +1,50 @@
+{
+  "template": "minecraft:white_glazed_terracotta",
+  "state_properties": {
+    "fed": {
+      "type": "boolean"
+    },
+    "level": {
+      "type": "enum",
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ]
+    },
+    "powered": {
+      "type": "boolean"
+    }
+  },
+  "default_state": {
+    "fed": "false",
+    "level": "0",
+    "powered": "false"
+  },
+  "properties": {
+    "hardness": 3.0,
+    "explosion_resistance": 6.0,
+    "map_color": 15,
+    "sounds": "minecraft:copper_bars",
+    "occludes": false
+  },
+  "shapes": {
+    "default": [
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    ]
+  },
+  "components": {
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.hydro_tray"
+    },
+    "minecraft:item_model": "hempdustry:hydro_tray"
+  }
+}

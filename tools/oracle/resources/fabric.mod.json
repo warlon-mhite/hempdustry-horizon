@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "hempdustry_horizon_oracle",
+  "version": "1",
+  "name": "Hempdustry facts export (dev only)",
+  "description": "Writes Hempdustry's blocks, items and tags as the game registers them, for the Horizon port. Never shipped.",
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": { "main": ["com.warlonmhite.hempdustry.horizon.oracle.FactsExporter"] },
+  "depends": { "hempdustry": "*", "fabric-lifecycle-events-v1": "*" }
+}

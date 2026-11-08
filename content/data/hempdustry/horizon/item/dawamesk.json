@@ -1,0 +1,17 @@
+{
+  "template": "minecraft:stick",
+  "max_stack_size": 16,
+  "components": {
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.dawamesk"
+    },
+    "minecraft:item_model": "hempdustry:dawamesk",
+    "minecraft:consumable": {},
+    "minecraft:food": {
+      "nutrition": 6,
+      "saturation": 7.2000003,
+      "can_always_eat": true
+    },
+    "!minecraft:cooking_fuel": {}
+  }
+}

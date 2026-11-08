@@ -1,0 +1,13 @@
+{
+  "template": "minecraft:wheat_seeds",
+  "place_block": "hempdustry:indica_crop",
+  "components": {
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.indica_seeds"
+    },
+    "minecraft:item_model": "hempdustry:indica_seeds",
+    "minecraft:compostable": {
+      "layers": "hempdustry:compostable/chance_30"
+    }
+  }
+}

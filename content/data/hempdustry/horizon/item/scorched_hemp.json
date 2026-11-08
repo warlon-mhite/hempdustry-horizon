@@ -1,0 +1,13 @@
+{
+  "template": "minecraft:stick",
+  "components": {
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.scorched_hemp"
+    },
+    "minecraft:item_model": "hempdustry:scorched_hemp",
+    "minecraft:compostable": {
+      "layers": "hempdustry:compostable/chance_30"
+    },
+    "!minecraft:cooking_fuel": {}
+  }
+}

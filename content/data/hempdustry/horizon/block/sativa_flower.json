@@ -1,0 +1,12 @@
+{
+  "template": "minecraft:rose_bush",
+  "components": {
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.sativa_flower"
+    },
+    "minecraft:item_model": "hempdustry:sativa_flower",
+    "minecraft:compostable": {
+      "layers": "hempdustry:compostable/chance_65"
+    }
+  }
+}

@@ -1,0 +1,29 @@
+// Dev-only init script: adds a `horizonOracle` source set and server run to the Java checkout's
+// `fabric` project, so the facts exporter runs against the real registry without a tracked file
+// changing there.
+//
+//   ./gradlew --init-script <this file> :fabric:runHorizonOracle -Phorizon.oracle.out=<FACTS.json>
+//
+// Same hook as the checkout's own local init scripts: `plugins.withId('fabric-loom')`, while Loom
+// is being applied and before it turns run configs into tasks.
+def here = buildscript.sourceFile.parentFile
+gradle.allprojects { project ->
+    project.plugins.withId('fabric-loom') {
+        if (project.name != 'fabric') return
+        project.sourceSets.create('horizonOracle') { set ->
+            set.java.srcDir(new File(here, 'java'))
+            set.resources.srcDir(new File(here, 'resources'))
+            set.compileClasspath += project.sourceSets.main.compileClasspath + project.sourceSets.main.output
+            set.runtimeClasspath += project.sourceSets.main.runtimeClasspath + project.sourceSets.main.output
+        }
+        def out = project.findProperty('horizon.oracle.out') ?: project.file('build/horizon-oracle/facts.json').path
+        project.loom.runs.create('horizonOracle') { run ->
+            run.server()
+            run.name = 'Horizon oracle'
+            run.source(project.sourceSets.horizonOracle)
+            run.vmArg("-Dhorizon.oracle.out=${out}")
+            run.vmArg('-Dhorizon.oracle.namespaces=hempdustry')
+            run.runDir('build/horizon-oracle')
+        }
+    }
+}

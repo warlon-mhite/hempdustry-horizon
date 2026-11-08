@@ -1,0 +1,112 @@
+{
+  "template": "minecraft:cake",
+  "state_properties": {
+    "potency": {
+      "type": "enum",
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
+      ]
+    },
+    "quality": {
+      "type": "enum",
+      "values": [
+        "rough",
+        "standard",
+        "clean",
+        "perfect"
+      ]
+    }
+  },
+  "default_state": {
+    "potency": "0",
+    "quality": "rough"
+  },
+  "shapes": {
+    "properties": [
+      "bites"
+    ],
+    "values": {
+      "1": [
+        [
+          0.1875,
+          0.0,
+          0.0625,
+          0.9375,
+          0.5,
+          0.9375
+        ]
+      ],
+      "2": [
+        [
+          0.3125,
+          0.0,
+          0.0625,
+          0.9375,
+          0.5,
+          0.9375
+        ]
+      ],
+      "3": [
+        [
+          0.4375,
+          0.0,
+          0.0625,
+          0.9375,
+          0.5,
+          0.9375
+        ]
+      ],
+      "4": [
+        [
+          0.5625,
+          0.0,
+          0.0625,
+          0.9375,
+          0.5,
+          0.9375
+        ]
+      ],
+      "5": [
+        [
+          0.6875,
+          0.0,
+          0.0625,
+          0.9375,
+          0.5,
+          0.9375
+        ]
+      ],
+      "6": [
+        [
+          0.8125,
+          0.0,
+          0.0625,
+          0.9375,
+          0.5,
+          0.9375
+        ]
+      ]
+    },
+    "default": [
+      [
+        0.0625,
+        0.0,
+        0.0625,
+        0.9375,
+        0.5,
+        0.9375
+      ]
+    ]
+  },
+  "components": {
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.space_cake"
+    },
+    "minecraft:item_model": "hempdustry:space_cake",
+    "!minecraft:compostable": {}
+  }
+}

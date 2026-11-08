@@ -1,0 +1,24 @@
+{
+  "template": "minecraft:white_carpet",
+  "properties": {
+    "map_color": 36
+  },
+  "components": {
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.hemp_carpet"
+    },
+    "minecraft:equippable": {
+      "slot": "body",
+      "equip_sound": "minecraft:entity.llama.swag",
+      "asset_id": "hempdustry:hemp_carpet",
+      "allowed_entities": [
+        "minecraft:llama",
+        "minecraft:trader_llama"
+      ],
+      "can_be_sheared": true,
+      "shearing_sound": "minecraft:item.llama_carpet.unequip"
+    },
+    "minecraft:item_model": "hempdustry:hemp_carpet",
+    "!minecraft:cooking_fuel": {}
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "template": "minecraft:wheat_seeds",
+  "place_block": "hempdustry:beldia_crop",
+  "components": {
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.beldia_seeds"
+    },
+    "minecraft:item_model": "hempdustry:beldia_seeds",
+    "minecraft:compostable": {
+      "layers": "hempdustry:compostable/chance_30"
+    }
+  }
+}

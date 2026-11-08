@@ -1,0 +1,13 @@
+{
+  "template": "minecraft:oak_fence_gate",
+  "properties": {
+    "map_color": 0
+  },
+  "components": {
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.hemp_planks_fence_gate"
+    },
+    "minecraft:item_model": "hempdustry:hemp_planks_fence_gate",
+    "!minecraft:cooking_fuel": {}
+  }
+}

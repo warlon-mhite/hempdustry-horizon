@@ -1,0 +1,10 @@
+{
+  "template": "minecraft:stick",
+  "components": {
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.rosin"
+    },
+    "minecraft:item_model": "hempdustry:rosin",
+    "!minecraft:cooking_fuel": {}
+  }
+}

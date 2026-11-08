@@ -1,0 +1,10 @@
+{
+  "template": "minecraft:stick",
+  "components": {
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.bubble_hash"
+    },
+    "minecraft:item_model": "hempdustry:bubble_hash",
+    "!minecraft:cooking_fuel": {}
+  }
+}

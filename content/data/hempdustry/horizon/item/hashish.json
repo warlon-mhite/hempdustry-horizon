@@ -1,0 +1,10 @@
+{
+  "template": "minecraft:stick",
+  "components": {
+    "minecraft:item_name": {
+      "translate": "item.hempdustry.hashish"
+    },
+    "minecraft:item_model": "hempdustry:hashish",
+    "!minecraft:cooking_fuel": {}
+  }
+}

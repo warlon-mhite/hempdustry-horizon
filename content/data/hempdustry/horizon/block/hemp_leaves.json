@@ -1,0 +1,19 @@
+{
+  "template": "minecraft:moss_block",
+  "properties": {
+    "hardness": 0.2,
+    "explosion_resistance": 0.2,
+    "map_color": 7,
+    "sounds": "minecraft:grass_block",
+    "occludes": false
+  },
+  "components": {
+    "minecraft:item_name": {
+      "translate": "block.hempdustry.hemp_leaves"
+    },
+    "minecraft:item_model": "hempdustry:hemp_leaves",
+    "minecraft:compostable": {
+      "layers": "hempdustry:compostable/chance_50"
+    }
+  }
+}

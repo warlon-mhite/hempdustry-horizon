@@ -28,6 +28,10 @@ repository, `HORIZON_RESOURCES` Horizon's prepared resources (`.local/horizon-cl
 3. `tools/build.py hmod` assembles the pinned assets and data with `content/` on top and packs
    `build/hempdustry/target/horizon-mod/hempdustry.hmod` with `cargo horizon-mod`.
 
+`content/data/c/` holds the one convention tag the mod's worldgen needs and a loader would
+provide: `c:is_desert` (the desert, as NeoForge and Fabric write it), which Beldía's biome tag
+names alone. Horizon ships no `c:` tags, so without it no desert grows wild Beldía.
+
 Worlds stay compatible with the Java mod on Minecraft 26.3: the same ids, block states and data.
 
 ## The native mod

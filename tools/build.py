@@ -96,6 +96,7 @@ def stage():
             dest.write_bytes(t.extractfile(m).read())
             count += 1
     rewritten = rewrite_item_definitions(STAGE)
+    placements = rewrite_placements(STAGE)
     over = 0
     for src in (ROOT / "content").rglob("*"):
         if src.is_file():
@@ -112,8 +113,39 @@ def stage():
         f'api = "0.2"\n'
         f'side = "both"\n'
         f'capabilities = ["registries"]\n')
-    print(f"stage: {count} files from {cfg['commit']} ({rewritten} item definitions rewritten), "
-          f"{over} from content/, in {STAGE}")
+    print(f"stage: {count} files from {cfg['commit']} ({rewritten} item definitions, "
+          f"{placements} placed features rewritten), {over} from content/, in {STAGE}")
+
+
+# The placement modifiers the Java mod registers in code, and the vanilla one that stands in for
+# each. Horizon can't run ours and drops a whole placed feature over one type it doesn't know.
+CODE_PLACEMENTS = {
+    # Each wild Beldía, not just its patch's centre, in `#hempdustry:beldia_gen`. Vanilla's biome
+    # filter at the end of the chain asks the same of each plant's own spot (the biomes that list
+    # the feature are the tag's), through the biome zoom's jitter that ours avoids: at a desert's
+    # very edge a plant may land a block over the border, or miss a block inside it.
+    "hempdustry:in_beldia_biome": "minecraft:biome",
+}
+
+
+def rewrite_placements(stage_dir):
+    """Each placement modifier of ours in a placed feature becomes the vanilla one that stands in
+    for it (`CODE_PLACEMENTS`). Returns how many files changed."""
+    changed = 0
+    for path in sorted(stage_dir.glob("data/*/worldgen/placed_feature/*.json")):
+        feature = json.loads(path.read_text())
+        before = json.dumps(feature)
+        for modifier in feature.get("placement", []):
+            if modifier.get("type") in CODE_PLACEMENTS:
+                modifier["type"] = CODE_PLACEMENTS[modifier["type"]]
+        unknown = [m["type"] for m in feature.get("placement", [])
+                   if m.get("type", "").split(":", 1)[0] != "minecraft"]
+        if unknown:
+            sys.exit(f"{path.relative_to(stage_dir)}: placement modifiers Horizon can't run: {unknown}")
+        if json.dumps(feature) != before:
+            path.write_text(json.dumps(feature, indent=2) + "\n")
+            changed += 1
+    return changed
 
 
 # The data components the Java mod registers in code; the native mod registers them on Horizon.

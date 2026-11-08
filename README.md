@@ -9,7 +9,7 @@ the Java repository, and its behaviour written again in Rust.
 | Part | What | Status |
 |---|---|---|
 | Content (`.hmod`) | Every block, item, recipe, loot table, tag, advancement, model, texture, sound and translation | Builds; every block places and draws |
-| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Not started |
+| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Farming written and unit-tested (`native/`); not yet played in a game |
 
 ## How it is built
 
@@ -29,6 +29,15 @@ repository, `HORIZON_RESOURCES` Horizon's prepared resources (`.local/horizon-cl
    `build/hempdustry/target/horizon-mod/hempdustry.hmod` with `cargo horizon-mod`.
 
 Worlds stay compatible with the Java mod on Minecraft 26.3: the same ids, block states and data.
+
+## The native mod
+
+`native/` is a Horizon trait mod with the same id, `hempdustry`. `native/api/src/farm/` holds the Java
+mod's farming rules as plain Rust with no Horizon types (growth, light records, stress, mildew, the
+Grow Pot and Hydro Tray, trimming, bone meal, harvesting), tested on their own with `cargo test` in
+`native/api`; the rest of the crate wires them to Horizon's hooks. Building it into a game is
+`horizon-launcher native-build native --instance <instance> --trust-native-code`, which compiles
+Horizon with the mod linked in: trusting native code is the player's decision.
 
 ## Licence
 

@@ -1,0 +1,11 @@
+# Hempdustry: the native trait mod (docs/native-mods.md, "Trait mods"). Build it with
+# `horizon-launcher native-build <this folder> --instance <instance> --trust-native-code`.
+[mod]
+id = "hempdustry"
+version = "0.1.0"
+
+[compatibility]
+horizon_revision = "2ebf00a0281c592f79191e76fce0e7d522c6f425"
+
+[api]
+path = "api"

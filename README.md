@@ -9,7 +9,7 @@ the Java repository, and its behaviour written again in Rust.
 | Part | What | Status |
 |---|---|---|
 | Content (`.hmod`) | Every block, item, recipe, loot table, tag, advancement, model, texture, sound and translation | Builds; every block places and draws |
-| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Farming and smoking (`native/`): unit-tested, and played in a game on Horizon `2ebf00a` |
+| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Farming, smoking and the Decarboxylator (`native/`): unit-tested, and played in a game on Horizon `2ebf00a` |
 
 ## How it is built
 
@@ -59,6 +59,15 @@ A loaded smokeable or moon rock is named for its load in its tooltip ("Purple Ku
 no item-name hook, so the line above the hotbar keeps the plain name. Still to come: packing a
 device in a crafting grid (Horizon's crafting hook doesn't see the grid yet), per-strain tints,
 the cooldown overlay, Jelly Legs, the standing bong, edibles and the config file.
+
+The Decarboxylator, played in a game: three trays on one fire, each on its own clock, buds and leaf
+to decarboxylated hemp by the shipped recipes, fuel from any item that burns in a furnace, hoppers
+from above (trays), the sides (fuel) and below (output), only what belongs in each slot, the lit
+state, shift-clicks, its own screen with the flame and the three arrows, and its contents spilled
+when broken. Worlds keep its block data in the Java mod's keys. Horizon resolves only Minecraft's
+own burn-time references, so the native mod writes the mod's fuel times out: hemp burns in a
+vanilla furnace too. Still to come here: the oven's crackle and smoke, an anvil name on its screen,
+the Infuser, the Hemp Press and the Sifting Box.
 
 ## Licence
 

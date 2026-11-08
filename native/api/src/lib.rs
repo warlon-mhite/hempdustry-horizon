@@ -1,6 +1,6 @@
 //! Hempdustry's behaviour for Horizon: the launcher links this crate into the game and calls
-//! [`hooks`]. The rules themselves live in [`farm`], written against a small world interface;
-//! the rest of this crate wires them to Horizon's hook points.
+//! [`hooks`]. The rules themselves live in [`farm`], [`smoke`] and [`machine`], with no Horizon
+//! host; the rest of this crate wires them to Horizon's hook points.
 //!
 //! A level hook sees a block only as a state id, so the hooks that must answer at once
 //! (`may_place_on`, `can_survive`, the bone meal questions) read [`states::States`], and the work
@@ -12,6 +12,8 @@ pub mod farm;
 mod host;
 mod level;
 mod loot;
+pub mod machine;
+mod machines;
 pub mod smoke;
 mod smoking;
 mod states;
@@ -19,12 +21,15 @@ mod states;
 use std::sync::{Mutex, OnceLock, PoisonError};
 
 use horizon_client::mod_api::{
-    AddServerReloadListenersEvent, CanSurviveEvent, ComponentTypesEvent, DestroyBlockEvent, Flow,
-    Hooks, Host, InventoryTickEvent, IsBonemealSuccessEvent, IsValidBonemealTargetEvent,
-    ItemModelPropertyEvent, ItemStack, LevelDimension, LevelHost, LevelRandomHost,
-    LevelTickPostEvent, LevelWriteHost, LivingEntityUseItemFinishEvent,
-    LivingEntityUseItemStartEvent, LootFunctionEvent, LootTableLoadEvent, MayPlaceOnEvent,
-    OnUseTickEvent, PerformBonemealEvent, PlayerRespawnedEvent, RandomSource, RandomTickEvent,
+    AddServerReloadListenersEvent, BlockEntityContainerEvent, BlockEntityEvent,
+    BlockEntityTickEvent, BlockEntityTicksEvent, CanSurviveEvent, ComponentTypesEvent, Compound,
+    ContainerAcceptsEvent, DestroyBlockEvent, Flow, Hooks, Host, InventoryTickEvent,
+    IsBonemealSuccessEvent, IsValidBonemealTargetEvent, ItemModelPropertyEvent, ItemStack,
+    LevelDimension, LevelHost, LevelRandomHost, LevelTickPostEvent, LevelWriteHost,
+    LivingEntityUseItemFinishEvent, LivingEntityUseItemStartEvent, LootFunctionEvent,
+    LootTableLoadEvent, MayPlaceOnEvent, MenuQuickMoveEvent, MenuSlotRulesEvent, ModContainer,
+    ModifyDefaultComponentsEvent, NativeScreen, OnUseTickEvent, PerformBonemealEvent,
+    PlayerRespawnedEvent, RandomSource, RandomTickEvent, ScreenDrawEvent, ScreenEvent,
     ServerReloadListenerApplyEvent, ServerTickEvent, TickEvent, TooltipEvent, UseAnimationEvent,
     UseDurationEvent, UseItemEvent, UseItemOnEvent,
 };
@@ -66,6 +71,7 @@ struct Hempdustry {
     states: OnceLock<States>,
     queue: Mutex<Vec<Job>>,
     smoking: smoking::Smoking,
+    machines: machines::Machines,
 }
 
 impl Hempdustry {
@@ -349,6 +355,7 @@ impl Hooks for Hempdustry {
         event: &mut AddServerReloadListenersEvent<'_>,
     ) {
         smoking::Smoking::add_reload_listeners(event);
+        machines::Machines::add_reload_listeners(event);
     }
 
     fn server_reload_listener_apply(
@@ -357,6 +364,7 @@ impl Hooks for Hempdustry {
         event: &mut ServerReloadListenerApplyEvent<'_>,
     ) {
         self.smoking.reload(event);
+        self.machines.reload(event);
     }
 
     fn use_item(&self, host: &mut dyn Host, event: &mut UseItemEvent<'_>) -> Flow {
@@ -409,5 +417,56 @@ impl Hooks for Hempdustry {
 
     fn player_respawned(&self, _host: &mut dyn Host, event: &mut PlayerRespawnedEvent<'_>) {
         self.smoking.respawned(event);
+    }
+
+    // Machines (`machines`): the Decarboxylator's block entity, container, tick, menu and screen,
+    // and the items' fuel facts every fuel slot reads.
+
+    fn modify_default_components(&self, event: &mut ModifyDefaultComponentsEvent<'_>) {
+        self.machines.modify_default_components(event);
+    }
+
+    fn block_entity(
+        &self,
+        _host: &mut dyn Host,
+        event: &mut BlockEntityEvent<'_>,
+    ) -> Option<(String, Compound)> {
+        machines::Machines::block_entity(event)
+    }
+
+    fn block_entity_ticks(&self, _host: &dyn Host, event: &mut BlockEntityTicksEvent<'_>) {
+        machines::Machines::block_entity_ticks(event);
+    }
+
+    fn block_entity_container(
+        &self,
+        _host: &dyn Host,
+        event: &mut BlockEntityContainerEvent<'_>,
+    ) -> Option<ModContainer> {
+        machines::Machines::block_entity_container(event)
+    }
+
+    fn block_entity_tick(&self, host: &mut dyn Host, event: &mut BlockEntityTickEvent<'_>) {
+        self.machines.block_entity_tick(host, event);
+    }
+
+    fn menu_slot_rules(&self, event: &mut MenuSlotRulesEvent<'_>) {
+        self.machines.menu_slot_rules(event);
+    }
+
+    fn container_accepts(&self, _host: &dyn Host, event: &mut ContainerAcceptsEvent<'_>) -> Flow {
+        self.machines.container_accepts(event)
+    }
+
+    fn menu_quick_move(&self, host: &mut dyn Host, event: &mut MenuQuickMoveEvent<'_>) -> Flow {
+        self.machines.menu_quick_move(host, event)
+    }
+
+    fn screen(&self, _host: &dyn Host, event: &mut ScreenEvent<'_>) -> Option<NativeScreen> {
+        machines::Machines::screen(event)
+    }
+
+    fn screen_draw(&self, host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
+        machines::Machines::screen_draw(host, event);
     }
 }

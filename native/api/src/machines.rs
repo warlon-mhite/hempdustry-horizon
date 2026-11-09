@@ -11,6 +11,7 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, PoisonError, RwLock};
 
+use crate::config::Live;
 use crate::machine::decarb::{self, Kitchen, Oven};
 use crate::machine::fuel::{self, ItemFacts, Providers};
 use crate::smoke::data::{java_float, java_round};
@@ -79,6 +80,7 @@ pub(crate) struct Machines {
     settling: Mutex<Vec<sifting::Settling>>,
     /// Players whose click a box took, and the game time it did.
     claims: Mutex<HashMap<u128, i64>>,
+    settings: Live,
     pressing: RwLock<Arc<Recipes>>,
     /// Each press's push cooldown, by level and position.
     presses: RwLock<HashMap<infuser::At, i32>>,
@@ -129,6 +131,14 @@ fn block_id(block: &str) -> &str {
 }
 
 impl Machines {
+    /// The machines on the shared settings.
+    pub(crate) fn new(settings: Live) -> Self {
+        Self {
+            settings,
+            ..Self::default()
+        }
+    }
+
     /// Every item's defaults pass through here as Horizon reads them: ours have their burn time
     /// written out, and what a fuel slot needs to know of each is kept.
     pub(crate) fn modify_default_components(&self, event: &mut ModifyDefaultComponentsEvent<'_>) {
@@ -265,13 +275,14 @@ impl Machines {
         let mut oven = load(&event.entity.nbt);
         let mut slots = event.entity.items.clone();
         slots.resize(decarb::SLOT_COUNT, None);
-        let ticked = self.with_kitchen(|kitchen| oven.tick(&mut slots, decarb::COOK_TIME, kitchen));
+        let cook_time = self.settings.get().machine_time(decarb::COOK_TIME);
+        let ticked = self.with_kitchen(|kitchen| oven.tick(&mut slots, cook_time, kitchen));
         if ticked.changed {
             let entity = &mut *event.entity;
             entity.items = slots;
             save(&mut entity.nbt, &oven);
         }
-        let data = oven.data(decarb::COOK_TIME);
+        let data = oven.data(cook_time);
         if event.entity.data != data {
             event.entity.data = data.to_vec();
         }

@@ -23,7 +23,7 @@ use crate::farm::interact::Effect;
 use crate::host::Hands;
 use crate::machine::fuel::ItemFacts;
 use crate::machine::infuser::{
-    self, DATA_COUNT, Game, Gauge, Hemp, OUTPUT_SLOT, Poured, Quality, SLOT_COUNT, Timings, Tub,
+    self, DATA_COUNT, Game, Gauge, Hemp, OUTPUT_SLOT, Poured, Quality, SLOT_COUNT, Tub,
 };
 
 /// The Infuser: its block, its block entity type and its menu type share the id.
@@ -316,7 +316,7 @@ impl Machines {
         tub.push_cooldown = live.push_cooldown;
         let mut slots = event.entity.items.clone();
         slots.resize(SLOT_COUNT, None);
-        let timings = Timings::default();
+        let timings = self.settings.get().infuser;
         let (ticked, state) = {
             let mut game = HostGame {
                 host: &mut *host,

@@ -9,7 +9,7 @@ the Java repository, and its behaviour written again in Rust.
 | Part | What | Status |
 |---|---|---|
 | Content (`.hmod`) | Every block, item, recipe, loot table, tag, advancement, model, texture, sound and translation | Builds; every block places and draws |
-| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens | Farming, smoking, eating, the Decarboxylator, the Infuser, the Hemp Press, the Sifting Box and the water cauldron (`native/`): unit-tested, and played in a game on Horizon `fdc87ae` |
+| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens, the config | Farming, smoking, eating, the Decarboxylator, the Infuser, the Hemp Press, the Sifting Box, the water cauldron and the config file (`native/`): unit-tested, and played in a game on Horizon `fdc87ae` |
 
 ## How it is built
 
@@ -52,7 +52,7 @@ Played in a game: seeds, growth to two and three blocks and the height a roof le
 the Grow Pot and Hydro Tray (bottle, bucket, bone meal), both trims and the shears' wear, harvest
 from every block and from the bed with Fortune, buds and their spoiling, and the Top Shelf
 advancement. Still to come in this part: sulfur gas, Beldía's placement check, the tray's pump,
-the grow lamp's ceiling rule, particles and the config file.
+the grow lamp's ceiling rule and particles.
 
 Smoking, played in a game: a hit from the spliff, the pipe, the bongs (drawn on, as in Java) and the
 vaporizer, with each strain's effects at the dose's level and length, Beldía's exhale, the cooldown
@@ -63,7 +63,7 @@ A loaded smokeable or moon rock is named for its load in its tooltip ("Purple Ku
 "Mixed Vaporizer"), with "With Hashish" under a spliff or moon rock that carries hash; Horizon has
 no item-name hook, so the line above the hotbar keeps the plain name. Still to come: packing a
 device in a crafting grid (Horizon's crafting hook doesn't see the grid yet), per-strain tints,
-the cooldown overlay, Jelly Legs, the standing bong and the config file.
+the cooldown overlay, Jelly Legs and the standing bong.
 
 Eating, played in a game: a dosed edible (toast, cookie, brownie, dawamesk, bhang) gives nothing at
 once; its effects come after a come-up rolled from its quality's window (Perfect 87 to 93 s, Rough
@@ -108,6 +108,15 @@ into nine filtered kief, a bucket of water turning it into an ice-water wash tha
 jacket of ice and at that jacket's rate, into nine bubble hash; the screen settling a second after it
 fills, the batch taken with an empty hand, plant matter and powder kept apart with a line on the
 action bar saying why, a comparator reading the level. Still to come: the frost while it washes.
+
+The config file, played in a game: `config/hempdustry.json` is the Java mod's own file, read in the
+same format, so one file serves both editions. Missing knobs keep their defaults, values out of range
+are clamped with a warning in the log, and the file is written back complete with its comments; a
+file that can't be read is left as it is and changes nothing. Horizon reads it again whenever it
+changes, and `/hempdustry reload` (operators, level 2) does it at once and says whether it took. Every
+knob the ported parts use is read live: crop growth and mildew, the effect switches, the machine
+speed (the oven and the press) and the Infuser's two times. The client section and the loot section
+are kept in the file for the parts still to come.
 
 ## Licence
 

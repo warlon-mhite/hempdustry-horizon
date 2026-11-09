@@ -7,6 +7,8 @@
 //! that needs the whole world (a random tick, a bone meal step) is queued and played at the end
 //! of that level's tick, with the full host.
 
+pub mod config;
+mod configs;
 mod criteria;
 pub mod edible;
 mod edibles;
@@ -25,24 +27,26 @@ use std::sync::{Mutex, OnceLock, PoisonError};
 use horizon_client::mod_api::{
     AddServerReloadListenersEvent, AnalogOutputEvent, BlockEntityContainerEvent, BlockEntityEvent,
     BlockEntitySubmitEvent, BlockEntityTickEvent, BlockEntityTicksEvent, CanSurviveEvent,
-    ComponentTypesEvent, Compound, ContainerAcceptsEvent, DestroyBlockEvent, DispenseItemEvent,
-    Flow, HasAnalogOutputEvent, Hooks, Host, InventoryTickEvent, IsBonemealSuccessEvent,
-    IsValidBonemealTargetEvent, ItemModelPropertyEvent, ItemStack, LevelDimension, LevelHost,
-    LevelRandomHost, LevelTickPostEvent, LevelWriteHost, LivingEntityUseItemFinishEvent,
-    LivingEntityUseItemStartEvent, LootDropsEvent, LootFunctionEvent, LootTableLoadEvent,
-    MayPlaceOnEvent, MenuQuickMoveEvent, MenuSlotRulesEvent, ModContainer,
-    ModifyDefaultComponentsEvent, NativeDispensed, NativeScreen, OnUseTickEvent,
-    PerformBonemealEvent, PlaceBlockEvent, PlayerRespawnedEvent, RandomSource, RandomTickEvent,
-    RightClickBlockV2Event, ScreenDrawEvent, ScreenEvent, ServerReloadListenerApplyEvent,
-    ServerTickEvent, StandaloneModelsEvent, TickEvent, TooltipEvent, UseAnimationEvent,
-    UseDurationEvent, UseItemEvent, UseItemOnEvent,
+    ComponentTypesEvent, Compound, ConfigLoadingEvent, ConfigReloadingEvent, ContainerAcceptsEvent,
+    DestroyBlockEvent, DispenseItemEvent, Flow, HasAnalogOutputEvent, Hooks, Host,
+    InventoryTickEvent, IsBonemealSuccessEvent, IsValidBonemealTargetEvent, ItemModelPropertyEvent,
+    ItemStack, LevelDimension, LevelHost, LevelRandomHost, LevelTickPostEvent, LevelWriteHost,
+    LivingEntityUseItemFinishEvent, LivingEntityUseItemStartEvent, LootDropsEvent,
+    LootFunctionEvent, LootTableLoadEvent, MayPlaceOnEvent, MenuQuickMoveEvent, MenuSlotRulesEvent,
+    ModContainer, ModifyDefaultComponentsEvent, NativeDispensed, NativeScreen, OnUseTickEvent,
+    PerformBonemealEvent, PerformCommandEvent, PlaceBlockEvent, PlayerRespawnedEvent, RandomSource,
+    RandomTickEvent, RegisterCommandsEvent, RegisterConfigsEvent, RightClickBlockV2Event,
+    ScreenDrawEvent, ScreenEvent, ServerReloadListenerApplyEvent, ServerTickEvent,
+    StandaloneModelsEvent, TickEvent, TooltipEvent, UseAnimationEvent, UseDurationEvent,
+    UseItemEvent, UseItemOnEvent,
 };
 
+use config::Live;
 use farm::harvest;
 use farm::interact::{self, Held};
 use farm::medium::Medium;
 use farm::model::{Block, Pos, above};
-use farm::{Config, plant};
+use farm::plant;
 use host::{HostWorld, StateText};
 use level::LevelWorld;
 use states::{Defaults, Soil, States};
@@ -50,7 +54,7 @@ use states::{Defaults, Soil, States};
 /// The game calls this once, at start.
 #[must_use]
 pub fn hooks() -> Box<dyn Hooks> {
-    Box::new(Hempdustry::default())
+    Box::new(Hempdustry::new())
 }
 
 /// What a level's tick end plays for a plant.
@@ -69,8 +73,10 @@ struct Job {
     work: Work,
 }
 
-#[derive(Default)]
 struct Hempdustry {
+    /// The config in force, shared with every part that reads it.
+    settings: Live,
+    configs: configs::Configs,
     defaults: OnceLock<Defaults>,
     states: OnceLock<States>,
     soil: OnceLock<Soil>,
@@ -81,6 +87,21 @@ struct Hempdustry {
 }
 
 impl Hempdustry {
+    fn new() -> Self {
+        let settings = Live::default();
+        Self {
+            configs: configs::Configs::new(settings.clone()),
+            defaults: OnceLock::new(),
+            states: OnceLock::new(),
+            soil: OnceLock::new(),
+            queue: Mutex::default(),
+            smoking: smoking::Smoking::new(settings.clone()),
+            edibles: edibles::Edibles::default(),
+            machines: machines::Machines::new(settings.clone()),
+            settings,
+        }
+    }
+
     /// The state table, built in the first level hook once the defaults are known.
     fn states(&self, level: &dyn LevelHost) -> Option<&States> {
         if let Some(states) = self.states.get() {
@@ -181,7 +202,7 @@ impl Hooks for Hempdustry {
         if jobs.is_empty() {
             return;
         }
-        let mut world = HostWorld::new(host, event.dimension, states, Config::default());
+        let mut world = HostWorld::new(host, event.dimension, states, self.settings.get().farm());
         for job in jobs {
             match job.work {
                 Work::RandomTick => plant::random_tick(&mut world, job.pos),
@@ -299,7 +320,7 @@ impl Hooks for Hempdustry {
             return Flow::Continue;
         }
         let held = held(host, event.stack);
-        let mut world = HostWorld::new(host, dimension, states, Config::default());
+        let mut world = HostWorld::new(host, dimension, states, self.settings.get().farm());
         let mut effects = Vec::new();
         let claimed = interact::use_item_on(
             &mut world,
@@ -327,7 +348,7 @@ impl Hooks for Hempdustry {
         let pos = event.pos;
         let block = states.block(event.state);
         let dimension = host.dimension();
-        let mut world = HostWorld::new(host, dimension, states, Config::default());
+        let mut world = HostWorld::new(host, dimension, states, self.settings.get().farm());
         let harvest = match block {
             Block::Plant(_) => harvest::of_break(&world, pos),
             Block::Pot(_) | Block::Tray(_) => harvest::of_bed_break(&world, pos),
@@ -553,5 +574,33 @@ impl Hooks for Hempdustry {
     fn analog_output(&self, level: &dyn LevelHost, event: &mut AnalogOutputEvent) {
         self.machines.infuser_analog_output(level, event);
         machines::Machines::sifting_box_analog_output(level, event);
+    }
+
+    fn register_configs(&self, _host: &mut dyn Host, event: &mut RegisterConfigsEvent<'_>) {
+        configs::Configs::register(event.configs);
+    }
+
+    fn config_loading(&self, _host: &mut dyn Host, event: &mut ConfigLoadingEvent<'_>) {
+        self.configs.loaded(event.config);
+    }
+
+    fn config_reloading(&self, _host: &mut dyn Host, event: &mut ConfigReloadingEvent<'_>) {
+        self.configs.loaded(event.config);
+    }
+
+    fn register_commands(&self, _host: &mut dyn Host, event: &mut RegisterCommandsEvent<'_>) {
+        configs::Configs::register_commands(event.commands);
+    }
+
+    fn perform_command(&self, host: &mut dyn Host, event: &mut PerformCommandEvent<'_>) -> Flow {
+        if event
+            .command
+            .split_whitespace()
+            .ne(configs::RELOAD.split_whitespace())
+        {
+            return Flow::Continue;
+        }
+        host.feedback(self.configs.reload());
+        Flow::Cancel
     }
 }

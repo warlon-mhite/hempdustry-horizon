@@ -181,6 +181,7 @@ impl Machines {
         let mut slots = event.entity.items.clone();
         slots.resize(SLOT_COUNT, None);
         let back = behind(host, pos);
+        let press_time = self.settings.get().machine_time(PRESS_TIME);
         let ticked = self.with_bench(|bench| match back {
             Some((pos, side)) => {
                 let mut behind = Behind {
@@ -188,17 +189,17 @@ impl Machines {
                     pos,
                     side,
                 };
-                press.tick(&mut slots, heated, PRESS_TIME, bench, &mut behind)
+                press.tick(&mut slots, heated, press_time, bench, &mut behind)
             }
             // No facing: nowhere to pour, as a press with nothing behind it.
-            None => press.tick(&mut slots, heated, PRESS_TIME, bench, &mut Nowhere),
+            None => press.tick(&mut slots, heated, press_time, bench, &mut Nowhere),
         });
         if ticked.changed {
             let entity = &mut *event.entity;
             entity.items = slots;
             save(&mut entity.nbt, &press);
         }
-        let data = press.data(PRESS_TIME);
+        let data = press.data(press_time);
         if event.entity.data != data {
             event.entity.data = data.to_vec();
         }

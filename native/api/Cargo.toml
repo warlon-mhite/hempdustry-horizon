@@ -9,6 +9,9 @@ edition = "2024"
 horizon-client = { git = "https://github.com/horizon-rust/horizon", rev = "fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca" }
 # The advancement conditions Horizon hands a criterion test (in Horizon's Cargo.lock).
 serde_json = "1.0.151"
+# The config file's shape, and the game's log (both in Horizon's Cargo.lock).
+serde = { version = "1.0.229", features = ["derive"] }
+log = "0.4.34"
 
 # Checked by `cargo clippy --all-targets`; a lint the code breaks on purpose is answered where it
 # happens with `#[expect(…, reason = "…")]`.

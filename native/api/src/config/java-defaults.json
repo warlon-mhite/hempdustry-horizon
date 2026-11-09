@@ -1,0 +1,39 @@
+{
+  "client": {
+    "_comment": "Read by a client, sent to nobody. updateCheck=false stops this client checking for a newer release on start-up; a dedicated server never asks. Turn it off in a modpack, where the update it would announce cannot be taken anyway. biomeTintStrength is 0-1: how far hemp growing in the world is pulled towards the local grass colour, so a plant does not clash with the biome around it. 0 paints the crops exactly as drawn, 1 is the full tint vanilla gives grass. ripeAroma=false stops the wisps that drift off ripe plants; vanilla's Particles setting thins or hides them along with every other particle.",
+    "biomeTintStrength": 0.35,
+    "ripeAroma": true,
+    "updateCheck": true
+  },
+  "effects": {
+    "_comment": "enabled=false is 'industrial hemp only': no drug effects anywhere. maxLevel caps every effect the mod applies; maxBuffLevel caps only the helpful ones (Speed, Resistance, Absorption...), so a big dose still costs its full Hunger. Raise maxBuffLevel for a stronger mod in a modded pack. The multipliers are 0.05-10, except cooldownMultiplier, 0-10 (0 is no cooldown), and greenOutChanceMultiplier, 0-100. greenOutChanceMultiplier 0 disables green-outs, as do greenOut=false and enabled=false.",
+    "cooldownMultiplier": 1.0,
+    "debuffs": true,
+    "durationMultiplier": 1.0,
+    "enabled": true,
+    "greenOut": true,
+    "greenOutChanceMultiplier": 1.0,
+    "maxBuffLevel": 2,
+    "maxLevel": 4,
+    "munchies": true,
+    "nausea": true,
+    "onsetMultiplier": 1.0
+  },
+  "world": {
+    "_comment": "cropGrowthMultiplier and machineSpeedMultiplier are speeds: 2.0 is twice as fast. machineSpeed drives the Decarboxylator and the Hemp Press; the Infuser has its own section. Whether bees pollinate hemp is the #minecraft:bee_growables tag, not a setting here. creepersSeekHemp=false stops creepers now and then wandering into grown, open-sky hemp fields; the goal is still added to them, it simply never starts, so it takes effect on the next /hempdustry reload. mildew=false keeps powdery mildew out of roofed grows: no plant catches it, and a plant that has it is clean again on its next random tick.",
+    "creepersSeekHemp": true,
+    "cropGrowthMultiplier": 1.0,
+    "machineSpeedMultiplier": 1.0,
+    "mildew": true
+  },
+  "infuser": {
+    "_comment": "Ticks. minTime is the earliest a batch can be pulled, fullTime a full simmer. 20 ticks = 1 second. Defaults are 5 and 15 minutes; the ceiling is 32000 (about 26 minutes), which is as long a simmer as the screen can be told about.",
+    "fullTimeTicks": 18000,
+    "minTimeTicks": 6000
+  },
+  "loot": {
+    "_comment": "The mod's additions to vanilla loot tables: hemp seeds in grass and chests, music discs in chests, shipwreck fibre. enabled=false removes all of them. Creepers dropping the two discs is the #minecraft:creeper_drop_music_discs tag, not a setting here.",
+    "chanceMultiplier": 1.0,
+    "enabled": true
+  }
+}

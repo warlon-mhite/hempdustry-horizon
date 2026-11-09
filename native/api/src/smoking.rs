@@ -21,6 +21,7 @@ use horizon_client::mod_api::{
 use horizon_client::text::{GRAY, Text};
 use serde_json::{Map, Value};
 
+use crate::config::Live;
 use crate::smoke::hit::{Dice, Hit, Rules, Smoker, Spent, Worn};
 use crate::smoke::name::{self, Labels, PackedName};
 use crate::smoke::{Catalog, Category, Device, Effect, Exhale, Policy, SmokeContents};
@@ -86,6 +87,7 @@ pub(crate) struct Smoking {
     cooldowns: Mutex<HashMap<u128, i64>>,
     pending: Mutex<Vec<Pending>>,
     dice: Mutex<SplitMix>,
+    settings: Live,
 }
 
 /// Vanilla's category of an effect; an effect Horizon doesn't know counts as neutral.
@@ -99,6 +101,19 @@ pub(crate) fn category(id: &str) -> Category {
 }
 
 impl Smoking {
+    /// Smoking on the shared settings.
+    pub(crate) fn new(settings: Live) -> Self {
+        Self {
+            settings,
+            ..Self::default()
+        }
+    }
+
+    /// The config's effect switches now in force.
+    pub(crate) fn policy(&self) -> Policy {
+        self.settings.get().effects
+    }
+
     pub(crate) fn catalog(&self) -> Arc<Catalog> {
         Arc::clone(&self.catalog.read().unwrap_or_else(PoisonError::into_inner))
     }
@@ -366,7 +381,7 @@ impl Smoking {
         mut stack: ItemStack,
     ) -> Option<ItemStack> {
         let catalog = self.catalog();
-        let policy = Policy::default();
+        let policy = self.policy();
         let rules = Rules {
             catalog: &catalog,
             policy: &policy,

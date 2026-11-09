@@ -17,7 +17,7 @@ use horizon_client::text::{AQUA, DARK_GRAY, GRAY, LIGHT_PURPLE, Text, WHITE};
 
 use crate::edible::{self, MAX_BITES, MAX_TIER, Pending, Rules, SPACE_CAKE, Waiting};
 use crate::machine::infuser::Quality;
-use crate::smoke::{Effect, Policy};
+use crate::smoke::Effect;
 use crate::smoking::{Smoking, SplitMix, category};
 
 const POTENCY: &str = "hempdustry:potency";
@@ -166,7 +166,7 @@ impl Edibles {
     ) {
         let catalog = smoking.catalog();
         let bundle = catalog.edible();
-        let policy = Policy::default();
+        let policy = smoking.policy();
         let rules = Rules {
             bundle: &bundle,
             policy: &policy,

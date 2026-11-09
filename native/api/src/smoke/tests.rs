@@ -704,3 +704,138 @@ mod names {
         );
     }
 }
+
+/// Packing by hand, one item per use, against `PackingRecipe`'s rules.
+mod packing {
+    use super::*;
+    use crate::smoke::contents::Entry;
+    use crate::smoke::pack::{Load, MOON_ROCK, Packed, pack};
+
+    fn buds<'a>(catalog: &'a Catalog, item: &str) -> Load<'a> {
+        Load::of(catalog, item, SmokeContents::default).expect(item)
+    }
+
+    /// Uses `device` again and again with `load`, from empty, until nothing more goes in.
+    fn fill(catalog: &Catalog, device: Device, load: &Load<'_>) -> Vec<SmokeContents> {
+        let mut bowl = SmokeContents::default();
+        let mut charges = 0;
+        let mut steps = Vec::new();
+        while let Some(Packed {
+            contents,
+            charges: c,
+        }) = pack(catalog, device, &bowl, charges, load)
+        {
+            steps.push(contents.clone());
+            bowl = contents;
+            charges = c;
+        }
+        steps
+    }
+
+    fn one(strain: &str, count: i32) -> SmokeContents {
+        SmokeContents::of(&format!("hempdustry:{strain}"), count)
+    }
+
+    #[test]
+    fn each_use_adds_one_bud_up_to_the_bowls_max_dose() {
+        let catalog = catalog();
+        let indica = buds(&catalog, "hempdustry:indica_buds");
+        assert_eq!(
+            fill(&catalog, Device::Bong, &indica),
+            [one("indica", 1), one("indica", 2), one("indica", 3)]
+        );
+        assert_eq!(
+            fill(&catalog, Device::Pipe, &indica),
+            [one("indica", 1), one("indica", 2)]
+        );
+        assert_eq!(
+            fill(&catalog, Device::Vaporizer, &indica),
+            [one("indica", 1)]
+        );
+        assert!(fill(&catalog, Device::Spliff, &indica).is_empty());
+    }
+
+    #[test]
+    fn a_packed_bowl_holds_every_charge_of_its_device() {
+        let catalog = catalog();
+        let indica = buds(&catalog, "hempdustry:indica_buds");
+        for (device, hits) in [(Device::Pipe, 2), (Device::Bong, 4), (Device::Vaporizer, 2)] {
+            let packed = pack(&catalog, device, &SmokeContents::default(), 0, &indica);
+            assert_eq!(packed.map(|p| p.charges), Some(hits), "{device:?}");
+        }
+    }
+
+    #[test]
+    fn rosin_fills_a_bong_in_one_piece_and_fits_nothing_else() {
+        let catalog = catalog();
+        let rosin = buds(&catalog, "hempdustry:rosin");
+        assert_eq!(fill(&catalog, Device::Bong, &rosin), [one("rosin", 3)]);
+        assert!(fill(&catalog, Device::Pipe, &rosin).is_empty());
+        assert!(fill(&catalog, Device::Vaporizer, &rosin).is_empty());
+    }
+
+    #[test]
+    fn a_second_strain_is_refused() {
+        let catalog = catalog();
+        let hash = buds(&catalog, "hempdustry:hashish");
+        let bowl = one("indica", 1);
+        assert_eq!(pack(&catalog, Device::Bong, &bowl, 4, &hash), None);
+    }
+
+    #[test]
+    fn a_bowl_once_hit_takes_no_more() {
+        let catalog = catalog();
+        let indica = buds(&catalog, "hempdustry:indica_buds");
+        let bowl = one("indica", 1);
+        assert_eq!(pack(&catalog, Device::Bong, &bowl, 3, &indica), None);
+        assert!(pack(&catalog, Device::Bong, &bowl, 4, &indica).is_some());
+    }
+
+    #[test]
+    fn a_moon_rock_is_a_whole_bowl_for_a_bong_only() {
+        let catalog = catalog();
+        let rock = SmokeContents {
+            entries: vec![
+                Entry {
+                    strain: "hempdustry:indica".into(),
+                    count: 3,
+                },
+                Entry {
+                    strain: "hempdustry:hashish".into(),
+                    count: 1,
+                },
+            ],
+        };
+        let load = Load::of(&catalog, MOON_ROCK, || rock.clone()).expect("a loaded rock");
+        assert_eq!(
+            fill(&catalog, Device::Bong, &load),
+            std::slice::from_ref(&rock)
+        );
+        assert!(fill(&catalog, Device::Pipe, &load).is_empty());
+        // Nothing after it, and it goes on nothing.
+        let indica = buds(&catalog, "hempdustry:indica_buds");
+        assert_eq!(pack(&catalog, Device::Bong, &rock, 4, &indica), None);
+        assert_eq!(
+            pack(&catalog, Device::Bong, &one("indica", 1), 4, &load),
+            None
+        );
+        // A rock that carries nothing is no load.
+        assert_eq!(Load::of(&catalog, MOON_ROCK, SmokeContents::default), None);
+    }
+
+    #[test]
+    fn what_packs_as_no_strain_is_no_load() {
+        let catalog = catalog();
+        for item in [
+            "minecraft:wheat",
+            "hempdustry:indica_seeds",
+            "hempdustry:spliff",
+        ] {
+            assert_eq!(
+                Load::of(&catalog, item, SmokeContents::default),
+                None,
+                "{item}"
+            );
+        }
+    }
+}

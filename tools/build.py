@@ -100,9 +100,17 @@ def stage():
     over = 0
     for src in (ROOT / "content").rglob("*"):
         if src.is_file():
-            dest = STAGE / src.relative_to(ROOT / "content")
+            rel = src.relative_to(ROOT / "content")
+            dest = STAGE / rel
             dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(src, dest)
+            if is_lang(rel) and dest.exists():
+                # Lines only this edition says (how a device packs by hand), added to the Java
+                # mod's file rather than standing in for it; a key both have keeps ours.
+                merged = json.loads(dest.read_text(encoding="utf-8"))
+                merged.update(json.loads(src.read_text(encoding="utf-8")))
+                dest.write_text(json.dumps(merged, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            else:
+                shutil.copyfile(src, dest)
             over += 1
     (STAGE / "horizon-mod.toml").write_text(
         f'id = "hempdustry"\n'
@@ -115,6 +123,12 @@ def stage():
         f'capabilities = ["registries"]\n')
     print(f"stage: {count} files from {cfg['commit']} ({rewritten} item definitions, "
           f"{placements} placed features rewritten), {over} from content/, in {STAGE}")
+
+
+def is_lang(rel):
+    """`assets/<namespace>/lang/<locale>.json`."""
+    parts = rel.parts
+    return len(parts) == 4 and parts[0] == "assets" and parts[2] == "lang" and rel.suffix == ".json"
 
 
 # The placement modifiers the Java mod registers in code, and the vanilla one that stands in for

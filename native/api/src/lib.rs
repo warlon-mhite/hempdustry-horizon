@@ -417,6 +417,9 @@ impl Hooks for Hempdustry {
         if self.machines.took_click(host) {
             return Flow::Cancel;
         }
+        if self.smoking.pack_by_hand(host, event) == Flow::Cancel {
+            return Flow::Cancel;
+        }
         self.smoking.use_item(host, event)
     }
 

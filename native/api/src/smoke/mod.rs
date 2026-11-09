@@ -8,6 +8,7 @@ pub mod data;
 pub mod device;
 pub mod hit;
 pub mod name;
+pub mod pack;
 pub mod policy;
 
 #[cfg(test)]

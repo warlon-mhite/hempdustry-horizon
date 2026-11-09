@@ -24,6 +24,7 @@ use serde_json::{Map, Value};
 use crate::config::Live;
 use crate::smoke::hit::{Dice, Hit, Rules, Smoker, Spent, Worn};
 use crate::smoke::name::{self, Labels, PackedName};
+use crate::smoke::pack::{self, Load};
 use crate::smoke::{Catalog, Category, Device, Effect, Exhale, Policy, SmokeContents};
 
 pub(crate) const SMOKE_CONTENTS: &str = "hempdustry:smoke_contents";
@@ -56,6 +57,12 @@ const CREATIVE: i32 = 1;
 /// `SmokingDeviceItem.WISP_EVERY_TICKS`.
 const WISP_EVERY_TICKS: i32 = 5;
 const OVERWORLD: &str = "minecraft:overworld";
+/// The sound of an item going into a bowl packed by hand: the bundle's.
+const PACK_SOUND: &str = "minecraft:item.bundle.insert";
+/// The hint an empty pipe, bong or vaporizer shows under its name.
+const PACK_HINT: &str = "hempdustry.pack_by_hand";
+/// [`Host::carried_stack`]'s number for the off hand.
+const OFF_HAND: i32 = -106;
 
 /// The pieces of the hemp outfit, head to feet.
 const OUTFIT: [(EquipmentSlot, &str); 4] = [
@@ -178,6 +185,62 @@ impl Smoking {
             .is_some_and(|&until| now < until)
     }
 
+    /// Packing by hand ([`pack`]): a pipe, bong or vaporizer used with buds, hash, rosin or a
+    /// moon rock in the other hand takes one of them into its bowl. With nothing that goes in,
+    /// the click smokes as it would without a load.
+    pub(crate) fn pack_by_hand(&self, host: &mut dyn Host, event: &UseItemEvent<'_>) -> Flow {
+        let Some(device) = Device::of_item(&event.stack.item) else {
+            return Flow::Continue;
+        };
+        let Some(player) = host.acting_player() else {
+            return Flow::Continue;
+        };
+        let used = event.stack.clone();
+        let Some(slot) = hand_slot(host, &used) else {
+            return Flow::Continue;
+        };
+        let Some((other, other_slot)) = other_hand(host, slot) else {
+            return Flow::Continue;
+        };
+        let catalog = self.catalog();
+        let Some(load) = Load::of(&catalog, &other.item, || self.contents(host, &other)) else {
+            return Flow::Continue;
+        };
+        let contents = self.contents(host, &used);
+        let charges = match host.component(&used, CHARGES) {
+            Ok(Some(tag)) => number(tag).and_then(|n| i32::try_from(n).ok()).unwrap_or(0),
+            _ => 0,
+        };
+        let Some(packed) = pack::pack(&catalog, device, &contents, charges, &load) else {
+            return Flow::Continue;
+        };
+        // The device's own stack, so its damage, enchantments and name stay, as the recipe's copy.
+        let mut stack = used;
+        if host
+            .set_component(&mut stack, SMOKE_CONTENTS, contents_tag(&packed.contents))
+            .is_err()
+            || host
+                .set_component(&mut stack, CHARGES, Tag::Int(packed.charges))
+                .is_err()
+        {
+            return Flow::Continue;
+        }
+        if let Some(held) = host.carried_stack(slot) {
+            *held = stack;
+        }
+        if player.game_mode != CREATIVE
+            && let Some(held) = host.carried_stack(other_slot)
+        {
+            held.count = held.count.saturating_sub(1);
+        }
+        let pitch = {
+            let mut dice = self.dice.lock().unwrap_or_else(PoisonError::into_inner);
+            0.8 + dice.next_float() * 0.4
+        };
+        host.play_sound(PACK_SOUND, player.position, PLAYERS, 0.8, pitch);
+        Flow::Cancel
+    }
+
     /// `use`: the spliff, the pipe and the vaporizer hit on the click; the bong is drawn on
     /// over time and hits when the draw is done.
     pub(crate) fn use_item(&self, host: &mut dyn Host, event: &UseItemEvent<'_>) -> Flow {
@@ -239,6 +302,12 @@ impl Smoking {
             return;
         }
         let Ok(Some(tag)) = host.component(stack, SMOKE_CONTENTS) else {
+            // An empty pipe, bong or vaporizer says how it packs: the recipe's grid can't yet.
+            if Device::of_item(&stack.item).is_some_and(|d| d != Device::Spliff) {
+                let hint = Text::translate(PACK_HINT, &[]).with_color(GRAY);
+                let at = event.lines.len().min(1);
+                event.lines.insert(at, (hint, u32::MAX));
+            }
             return;
         };
         let catalog = self.catalog();
@@ -659,7 +728,35 @@ fn hand_slot(host: &mut dyn Host, used: &ItemStack) -> Option<i32> {
     if host.equipment(EquipmentSlot::MainHand).as_ref() == Some(used) {
         return (0..9).find(|&slot| host.carried_stack(slot).is_some_and(|s| s == used));
     }
-    (host.equipment(EquipmentSlot::OffHand).as_ref() == Some(used)).then_some(-106)
+    (host.equipment(EquipmentSlot::OffHand).as_ref() == Some(used)).then_some(OFF_HAND)
+}
+
+/// What the hand other than `slot`'s holds, and its slot in [`Host::carried_stack`]'s numbers.
+fn other_hand(host: &mut dyn Host, slot: i32) -> Option<(ItemStack, i32)> {
+    if slot != OFF_HAND {
+        let off = host.equipment(EquipmentSlot::OffHand)?;
+        return (off.count > 0).then_some((off, OFF_HAND));
+    }
+    let main = host.equipment(EquipmentSlot::MainHand)?;
+    let at = (0..9).find(|&s| host.carried_stack(s).is_some_and(|s| *s == main))?;
+    (main.count > 0).then_some((main, at))
+}
+
+/// `SmokeContents.CODEC`'s record form as NBT: `{entries: [{strain, count}]}`.
+fn contents_tag(contents: &SmokeContents) -> Tag {
+    let entries = contents
+        .entries
+        .iter()
+        .map(|entry| {
+            let mut tag = Compound::new();
+            tag.insert("strain".into(), Tag::String(entry.strain.as_str().into()));
+            tag.insert("count".into(), Tag::Int(entry.count));
+            Tag::Compound(tag)
+        })
+        .collect();
+    let mut tag = Compound::new();
+    tag.insert("entries".into(), Tag::List(entries));
+    Tag::Compound(tag)
 }
 
 /// `Entity.getLookAngle` from the player's yaw and pitch.

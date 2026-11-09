@@ -32,6 +32,9 @@ repository, `HORIZON_RESOURCES` Horizon's prepared resources (`.local/horizon-cl
 provide: `c:is_desert` (the desert, as NeoForge and Fabric write it), which Beldía's biome tag
 names alone. Horizon ships no `c:` tags, so without it no desert grows wild Beldía.
 
+`content/assets/hempdustry/lang/` holds the lines only this edition says (how a device packs by
+hand); the build adds them to the Java mod's language files rather than replacing those.
+
 Worlds stay compatible with the Java mod on Minecraft 26.3: the same ids, block states and data.
 
 ## The native mod
@@ -61,9 +64,15 @@ vaporizer's scorched hemp, and the smoking advancements. The build rewrites the 
 definitions so Horizon draws them packed (it reads `has_component` for vanilla's components only).
 A loaded smokeable or moon rock is named for its load in its tooltip ("Purple Kush Bong III",
 "Mixed Vaporizer"), with "With Hashish" under a spliff or moon rock that carries hash; Horizon has
-no item-name hook, so the line above the hotbar keeps the plain name. Still to come: packing a
-device in a crafting grid (Horizon's crafting hook doesn't see the grid yet), per-strain tints,
-the cooldown overlay, Jelly Legs and the standing bong.
+no item-name hook, so the line above the hotbar keeps the plain name.
+
+Packing, by hand: a pipe, bong or vaporizer used with buds, hash, rosin or a moon rock in the other
+hand takes one item per use into its bowl, up to the bowl's dose, so the number of clicks is the
+dose. A full bowl, or one already hit, smokes instead. The result is the device the Java mod's
+packing recipe makes (same load, every charge, the device's own wear, enchantments and name), so a
+stack moves between the two games unchanged; an empty device says how in its tooltip. The crafting
+grid can't pack yet (Horizon's crafting hook doesn't see the grid). Still to come: per-strain
+tints, the cooldown overlay, Jelly Legs and the standing bong.
 
 Eating, played in a game: a dosed edible (toast, cookie, brownie, dawamesk, bhang) gives nothing at
 once; its effects come after a come-up rolled from its quality's window (Perfect 87 to 93 s, Rough

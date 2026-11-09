@@ -306,3 +306,78 @@ fn a_bite_of_cake_feeds_two_and_never_oversaturates() {
     assert!(!can_eat(false, MAX_FOOD));
     assert!(can_eat(true, MAX_FOOD), "a creative player always may");
 }
+
+/// The variants `tools/build.py` writes for a recipe with this offset: every potency the offset
+/// can reach, in every quality.
+fn variants(offset: i32) -> Vec<butter::Butter> {
+    let mut potencies: Vec<i32> = (1..=MAX_TIER).map(|t| apply_offset(t, offset)).collect();
+    potencies.dedup();
+    let mut out = Vec::new();
+    for potency in potencies {
+        for quality in Quality::ALL {
+            let data = json!({"potency": potency, "offset": offset, "quality": quality.name()});
+            let data = data.as_object().expect("an object literal");
+            out.push(butter::Butter::from_json(data).expect("a variant the build writes"));
+        }
+    }
+    out
+}
+
+#[test]
+fn exactly_one_generated_variant_takes_each_butter() {
+    // The offsets the Java recipes use (toast and cookie -1, brownie and cake 0, dawamesk +1),
+    // and strengths past both ends of the 1..=24 cap.
+    for offset in [-1, 0, 1] {
+        let variants = variants(offset);
+        for strength in -2..=30 {
+            for quality in Quality::ALL {
+                let takers = variants
+                    .iter()
+                    .filter(|v| v.accepts(Some(strength), Some(quality)))
+                    .count();
+                assert_eq!(
+                    takers, 1,
+                    "offset {offset}, strength {strength}, {quality:?}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn a_variant_takes_the_butter_whose_tier_and_offset_make_its_potency() {
+    let take = |potency: i32, offset: i32, quality: &str, strength, grade| {
+        let data = json!({"potency": potency, "offset": offset, "quality": quality});
+        butter::Butter::from_json(data.as_object().expect("an object literal"))
+            .expect("valid")
+            .accepts(strength, grade)
+    };
+    // Strength 18 is tier III (`Infusion.transfer` then adds the edible's offset).
+    assert!(take(3, 0, "clean", Some(18), Some(Quality::Clean)));
+    assert!(take(4, 1, "clean", Some(18), Some(Quality::Clean)));
+    assert!(take(2, -1, "clean", Some(18), Some(Quality::Clean)));
+    assert!(
+        !take(3, 0, "perfect", Some(18), Some(Quality::Clean)),
+        "quality copies across"
+    );
+    // The clamp: tier IV with +1 stays IV, tier I with -1 stays I.
+    assert!(take(4, 1, "rough", Some(24), Some(Quality::Rough)));
+    assert!(take(1, -1, "rough", Some(1), Some(Quality::Rough)));
+    // A butter without components is strength 1 and Rough, as Java's `getOrDefault`.
+    assert!(take(1, 0, "rough", None, None));
+    assert!(!take(1, 0, "standard", None, None));
+}
+
+#[test]
+fn the_butter_kind_refuses_data_the_build_never_writes() {
+    let parse = |data: serde_json::Value| {
+        butter::Butter::from_json(data.as_object().expect("an object literal"))
+    };
+    assert!(parse(json!({"potency": 2, "offset": 0, "quality": "clean"})).is_some());
+    assert!(parse(json!({"potency": 0, "offset": 0, "quality": "clean"})).is_none());
+    assert!(parse(json!({"potency": 5, "offset": 0, "quality": "clean"})).is_none());
+    assert!(parse(json!({"potency": 2, "offset": 0, "quality": "shiny"})).is_none());
+    assert!(parse(json!({"potency": 2, "quality": "clean"})).is_none());
+    assert!(parse(json!({"potency": "2", "offset": 0, "quality": "clean"})).is_none());
+    assert!(parse(json!({"potency": 2, "offset": 1e12, "quality": "clean"})).is_none());
+}

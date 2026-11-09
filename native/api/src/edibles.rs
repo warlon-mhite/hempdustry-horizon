@@ -10,11 +10,13 @@ use std::sync::{Mutex, PoisonError};
 
 use horizon_client::mod_api::{
     AttachmentCodec, AttachmentError, AttachmentType, Compound, EquipmentSlot, Flow, Hand, Holder,
-    Host, ItemStack, LivingEntityUseItemFinishEvent, NativeEffect, NativeServerPlayer,
-    PlaceBlockEvent, RightClickBlockV2Event, ServerTickEvent, ServerTickPhase, Tag, TooltipEvent,
+    Host, IngredientEvent, IngredientTestEvent, ItemStack, LivingEntityUseItemFinishEvent,
+    NativeEffect, NativeServerPlayer, PlaceBlockEvent, RightClickBlockV2Event, ServerTickEvent,
+    ServerTickPhase, Tag, TooltipEvent,
 };
 use horizon_client::text::{AQUA, DARK_GRAY, GRAY, LIGHT_PURPLE, Text, WHITE};
 
+use crate::edible::butter::{self, Butter};
 use crate::edible::{self, MAX_BITES, MAX_TIER, Pending, Rules, SPACE_CAKE, Waiting};
 use crate::machine::infuser::Quality;
 use crate::smoke::Effect;
@@ -278,6 +280,37 @@ impl Edibles {
         for (i, line) in lines.into_iter().enumerate() {
             event.lines.insert(at + i, (line, u32::MAX));
         }
+    }
+
+    /// `hempdustry:cannabutter`'s load-time answer ([`butter`]): the item it can match, for data
+    /// the build writes. A recipe with any other data keeps an empty list and fails to load.
+    pub(crate) fn ingredient(event: &mut IngredientEvent<'_>) {
+        if event.kind == butter::KIND && Butter::from_json(event.data).is_some() {
+            event.items.push(butter::ITEM.to_owned());
+        }
+    }
+
+    /// `hempdustry:cannabutter` at craft time: only butter whose tier and quality make this
+    /// variant's result. Read off the stack itself (the hook has no host); cannabutter has no
+    /// default components, so what the stack carries is all there is.
+    pub(crate) fn ingredient_test(event: &mut IngredientTestEvent<'_>) {
+        if event.kind != butter::KIND || !event.accept {
+            return;
+        }
+        let Some(want) = Butter::from_json(event.data) else {
+            event.accept = false;
+            return;
+        };
+        let patched = |id| event.stack.data().and_then(|data| data.other(id));
+        let strength = match patched(STRENGTH) {
+            Some(Tag::Int(n)) => Some(*n),
+            _ => None,
+        };
+        let quality = match patched(QUALITY) {
+            Some(Tag::String(name)) => Quality::from_name(&name.to_string_lossy()),
+            _ => None,
+        };
+        event.accept = want.accepts(strength, quality);
     }
 }
 

@@ -4,8 +4,10 @@
     python3 tools/build.py facts      run the Java mod once and export its facts (needs the checkout
                                       at the pinned commit, clean, and its Gradle toolchain)
     python3 tools/build.py declare    write content/data/hempdustry/horizon/ from those facts
-    python3 tools/build.py stage      assemble build/hempdustry/: the pinned assets and data, then
-                                      content/ over them, and the manifest
+    python3 tools/build.py stage      assemble build/hempdustry/: the pinned assets and data, rewritten
+                                      where Horizon can't run them as shipped (item models, placement
+                                      modifiers, the infused edible recipes), then content/ over them,
+                                      and the manifest
     python3 tools/build.py hmod       stage, then pack it with cargo-horizon-mod
 
 The Java repository stays the one source of the mod's data and art: nothing of it is copied into
@@ -97,6 +99,7 @@ def stage():
             count += 1
     rewritten = rewrite_item_definitions(STAGE)
     placements = rewrite_placements(STAGE)
+    infused = rewrite_infused_recipes(STAGE)
     over = 0
     for src in (ROOT / "content").rglob("*"):
         if src.is_file():
@@ -122,7 +125,8 @@ def stage():
         f'side = "both"\n'
         f'capabilities = ["registries"]\n')
     print(f"stage: {count} files from {cfg['commit']} ({rewritten} item definitions, "
-          f"{placements} placed features rewritten), {over} from content/, in {STAGE}")
+          f"{placements} placed features rewritten, {infused[0]} infused recipes as {infused[1]}), "
+          f"{over} from content/, in {STAGE}")
 
 
 def is_lang(rel):
@@ -160,6 +164,92 @@ def rewrite_placements(stage_dir):
             path.write_text(json.dumps(feature, indent=2) + "\n")
             changed += 1
     return changed
+
+
+# The Java mod's recipe types that carry cannabutter's dose onto what is baked with it, and the
+# vanilla type each is written out as.
+INFUSED_TYPES = {
+    "hempdustry:infused_shaped": "minecraft:crafting_shaped",
+    "hempdustry:infused_shapeless": "minecraft:crafting_shapeless",
+}
+BUTTER = "hempdustry:cannabutter"
+# `Quality`'s names, low to high, and `EdibleEffects.MAX_TIER`.
+QUALITIES = ["rough", "standard", "clean", "perfect"]
+MAX_TIER = 4
+
+
+def rewrite_infused_recipes(stage_dir):
+    """Horizon crafts no recipe type of a mod's, and its crafting hook can't see the grid, so an
+    infused recipe (`Infusion.transfer`: the result takes the butter's tier, plus the recipe's
+    `offset`, and its quality) becomes one vanilla recipe per result it can make,
+    `<recipe>/potency_<n>_<quality>`, its result carrying that dose. The butter's place takes the
+    native mod's ingredient kind (`edible/butter.rs`), which accepts only the butter that makes
+    that result, so exactly one variant matches any grid. The variants share a `group` (one tile
+    in the recipe book), and the advancements that hand out or watch the recipe name every
+    variant instead. Returns (recipes, variants)."""
+    renamed = {}
+    for path in sorted(stage_dir.glob("data/*/recipe/*.json")):
+        recipe = json.loads(path.read_text())
+        kind = recipe.get("type")
+        if kind not in INFUSED_TYPES:
+            continue
+        namespace, name = path.parts[-3], path.stem
+        offset = recipe.pop("offset", 0)
+        recipe["type"] = INFUSED_TYPES[kind]
+        recipe.setdefault("group", f"{namespace}:{name}")
+        slots = recipe["key"] if "key" in recipe else dict(enumerate(recipe["ingredients"]))
+        butter_slots = [slot for slot, ingredient in slots.items() if ingredient == BUTTER]
+        if len(butter_slots) != 1:
+            sys.exit(f"{path.relative_to(stage_dir)}: an infused recipe needs exactly one plain "
+                     f"`{BUTTER}` ingredient, found {len(butter_slots)}")
+        potencies = sorted({min(max(tier + offset, 1), MAX_TIER) for tier in range(1, MAX_TIER + 1)})
+        path.unlink()
+        ids = []
+        for potency in potencies:
+            for quality in QUALITIES:
+                variant = json.loads(json.dumps(recipe))
+                butter = {"type": BUTTER, "potency": potency, "offset": offset, "quality": quality}
+                if "key" in variant:
+                    variant["key"][butter_slots[0]] = butter
+                else:
+                    variant["ingredients"][butter_slots[0]] = butter
+                variant["result"].setdefault("components", {}).update(
+                    {"hempdustry:potency": potency, "hempdustry:quality": quality})
+                variant_name = f"{name}/potency_{potency}_{quality}"
+                out = path.parent / f"{variant_name}.json"
+                out.parent.mkdir(exist_ok=True)
+                out.write_text(json.dumps(variant, indent=2) + "\n")
+                ids.append(f"{namespace}:{variant_name}")
+        renamed[f"{namespace}:{name}"] = ids
+
+    def rename(value):
+        """A recipe id, or a list of them, with each infused recipe as all its variants."""
+        names = value if isinstance(value, list) else [value]
+        out = [v for n in names for v in renamed.get(n, [n])]
+        return out if isinstance(value, list) or len(out) > 1 else out[0]
+
+    for path in sorted(stage_dir.glob("data/*/advancement/**/*.json")):
+        advancement = json.loads(path.read_text())
+        before = json.dumps(advancement)
+        rewards = advancement.get("rewards", {})
+        if "recipes" in rewards:
+            rewards["recipes"] = rename(rewards["recipes"])
+        for name, criterion in list(advancement.get("criteria", {}).items()):
+            recipe = criterion.get("conditions", {}).get("recipes")
+            if criterion.get("trigger") != "minecraft:recipe_unlocked" or recipe not in renamed:
+                continue
+            # The criterion names one recipe: one criterion per variant, any of them enough.
+            del advancement["criteria"][name]
+            names = [f"{name}/{i}" for i in range(len(renamed[recipe]))]
+            for variant_name, variant in zip(names, renamed[recipe]):
+                advancement["criteria"][variant_name] = {
+                    **criterion, "conditions": {**criterion["conditions"], "recipes": variant}}
+            advancement["requirements"] = [
+                [n for r in group for n in (names if r == name else [r])]
+                for group in advancement.get("requirements", [])]
+        if json.dumps(advancement) != before:
+            path.write_text(json.dumps(advancement, indent=2) + "\n")
+    return len(renamed), sum(len(ids) for ids in renamed.values())
 
 
 # The data components the Java mod registers in code; the native mod registers them on Horizon.

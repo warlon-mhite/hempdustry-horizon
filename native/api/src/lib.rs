@@ -31,12 +31,12 @@ use horizon_client::mod_api::{
     BlockEntitySubmitEvent, BlockEntityTickEvent, BlockEntityTicksEvent, CanSurviveEvent,
     ComponentTypesEvent, Compound, ConfigLoadingEvent, ConfigReloadingEvent, ContainerAcceptsEvent,
     DestroyBlockEvent, DispenseItemEvent, EntityJoinLevelEvent, EntityLeaveLevelEvent, Flow,
-    HasAnalogOutputEvent, Hooks, Host, InventoryTickEvent, IsBonemealSuccessEvent,
-    IsValidBonemealTargetEvent, ItemModelPropertyEvent, ItemStack, LevelDimension, LevelHost,
-    LevelRandomHost, LevelTickPostEvent, LevelWriteHost, LivingEntityUseItemFinishEvent,
-    LivingEntityUseItemStartEvent, LootDropsEvent, LootFunctionEvent, LootTableLoadEvent,
-    MayPlaceOnEvent, MenuQuickMoveEvent, MenuSlotRulesEvent, ModContainer,
-    ModifyDefaultComponentsEvent, NativeDispensed, NativeScreen, OnUseTickEvent,
+    HasAnalogOutputEvent, Hooks, Host, IngredientEvent, IngredientTestEvent, InventoryTickEvent,
+    IsBonemealSuccessEvent, IsValidBonemealTargetEvent, ItemModelPropertyEvent, ItemStack,
+    LevelDimension, LevelHost, LevelRandomHost, LevelTickPostEvent, LevelWriteHost,
+    LivingEntityUseItemFinishEvent, LivingEntityUseItemStartEvent, LootDropsEvent,
+    LootFunctionEvent, LootTableLoadEvent, MayPlaceOnEvent, MenuQuickMoveEvent, MenuSlotRulesEvent,
+    ModContainer, ModifyDefaultComponentsEvent, NativeDispensed, NativeScreen, OnUseTickEvent,
     PerformBonemealEvent, PerformCommandEvent, PlaceBlockEvent, PlayerRespawnedEvent, RandomSource,
     RandomTickEvent, RegisterCommandsEvent, RegisterConfigsEvent, RegisterGoalsEvent,
     RightClickBlockV2Event, ScreenDrawEvent, ScreenEvent, ServerReloadListenerApplyEvent,
@@ -438,6 +438,14 @@ impl Hooks for Hempdustry {
     fn tooltip(&self, host: &dyn Host, event: &mut TooltipEvent<'_>) {
         self.smoking.tooltip(host, event);
         edibles::Edibles::tooltip(host, event);
+    }
+
+    fn ingredient(&self, event: &mut IngredientEvent<'_>) {
+        edibles::Edibles::ingredient(event);
+    }
+
+    fn ingredient_test(&self, event: &mut IngredientTestEvent<'_>) {
+        edibles::Edibles::ingredient_test(event);
     }
 
     fn living_entity_use_item_start(

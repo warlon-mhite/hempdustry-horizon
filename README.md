@@ -9,7 +9,7 @@ the Java repository, and its behaviour written again in Rust.
 | Part | What | Status |
 |---|---|---|
 | Content (`.hmod`) | Every block, item, recipe, loot table, tag, advancement, model, texture, sound and translation | Builds; every block places and draws |
-| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens, the config | Farming, smoking, eating, the Decarboxylator, the Infuser, the Hemp Press, the Sifting Box, the water cauldron, the config file and creepers drawn to hemp (`native/`): unit-tested, and played in a game on Horizon `fdc87ae` |
+| Native (Rust) | Growing, trimming, smoking, edibles, the machines and their screens, the config | Farming, smoking, eating and baking, the Decarboxylator, the Infuser, the Hemp Press, the Sifting Box, the water cauldron, the config file and creepers drawn to hemp (`native/`): unit-tested, and played in a game on Horizon `fdc87ae` |
 
 ## How it is built
 
@@ -34,6 +34,11 @@ names alone. Horizon ships no `c:` tags, so without it no desert grows wild Beld
 
 `content/assets/hempdustry/lang/` holds the lines only this edition says (how a device packs by
 hand); the build adds them to the Java mod's language files rather than replacing those.
+
+The build also rewrites what Horizon can't run as the Java mod ships it: an item model's
+`has_component` on a component of ours becomes a property the native mod answers, a placement
+modifier of ours the vanilla one that stands in for it, and each infused edible recipe its vanilla
+variants (above, under baking).
 
 Worlds stay compatible with the Java mod on Minecraft 26.3: the same ids, block states and data.
 
@@ -81,9 +86,17 @@ at the potency and for the length the butter's strength and grade set, through t
 of the config. What is still to come is saved with the player, so a logout doesn't lose it, and a
 death does. A space cake keeps its dose when placed; every click on it is a bite (never a candle),
 feeding as a cake does, and the seventh takes the last slice. The butter's grade and dose and an
-edible's potency and quality show in their tooltips. Still to come: making a dosed edible, since the
-infused recipes and the bhang's are custom recipe types that Horizon's crafting hook can't serve
-yet (it doesn't see the grid), and the eating statistics.
+edible's potency and quality show in their tooltips.
+
+Baking, played in a game: the toast, cookie, brownie, dawamesk and space cake are crafted from
+cannabutter in a crafting table, and come out with the potency and quality the Java recipe gives
+(the butter's tier, plus the edible's own step, and its grade). The Java mod's infused recipe types
+are custom, and Horizon crafts none of a mod's, so the build writes each as plain vanilla recipes,
+one per result it can make (`<recipe>/potency_<n>_<quality>`, 68 in all), each taking the native
+ingredient `hempdustry:cannabutter`, which accepts only the butter that makes that result; they share
+a recipe-book group and unlock together when the player first holds butter. Still to come: the
+bhang (its recipe turns the milk bucket into the bhang's, which a vanilla recipe can't do without
+leaving a second bucket), and the eating statistics.
 
 The Decarboxylator, played in a game: three trays on one fire, each on its own clock, buds and leaf
 to decarboxylated hemp by the shipped recipes, fuel from any item that burns in a furnace, hoppers

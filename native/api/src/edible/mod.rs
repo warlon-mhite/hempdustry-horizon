@@ -7,10 +7,14 @@
 //! the quality's window, and the rest follow it up a ramp. What is still to land waits on the
 //! player ([`Waiting`]).
 //!
+//! Baking one is [`butter`]: the ingredient kind that lets plain crafting recipes carry the butter's
+//! dose onto what is baked with it, as the Java mod's infused recipes do.
+//!
 //! Like [`crate::smoke`], nothing here knows Horizon: the data comes in as JSON, the come-up's
 //! roll as a uniform draw, and the doses go out as plain [`Effect`]s.
 
 pub mod bundle;
+pub mod butter;
 
 #[cfg(test)]
 mod tests;

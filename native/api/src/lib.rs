@@ -9,6 +9,8 @@
 
 pub mod config;
 mod configs;
+pub mod creeper;
+mod creepers;
 mod criteria;
 pub mod edible;
 mod edibles;
@@ -28,17 +30,18 @@ use horizon_client::mod_api::{
     AddServerReloadListenersEvent, AnalogOutputEvent, BlockEntityContainerEvent, BlockEntityEvent,
     BlockEntitySubmitEvent, BlockEntityTickEvent, BlockEntityTicksEvent, CanSurviveEvent,
     ComponentTypesEvent, Compound, ConfigLoadingEvent, ConfigReloadingEvent, ContainerAcceptsEvent,
-    DestroyBlockEvent, DispenseItemEvent, Flow, HasAnalogOutputEvent, Hooks, Host,
-    InventoryTickEvent, IsBonemealSuccessEvent, IsValidBonemealTargetEvent, ItemModelPropertyEvent,
-    ItemStack, LevelDimension, LevelHost, LevelRandomHost, LevelTickPostEvent, LevelWriteHost,
-    LivingEntityUseItemFinishEvent, LivingEntityUseItemStartEvent, LootDropsEvent,
-    LootFunctionEvent, LootTableLoadEvent, MayPlaceOnEvent, MenuQuickMoveEvent, MenuSlotRulesEvent,
-    ModContainer, ModifyDefaultComponentsEvent, NativeDispensed, NativeScreen, OnUseTickEvent,
+    DestroyBlockEvent, DispenseItemEvent, EntityJoinLevelEvent, EntityLeaveLevelEvent, Flow,
+    HasAnalogOutputEvent, Hooks, Host, InventoryTickEvent, IsBonemealSuccessEvent,
+    IsValidBonemealTargetEvent, ItemModelPropertyEvent, ItemStack, LevelDimension, LevelHost,
+    LevelRandomHost, LevelTickPostEvent, LevelWriteHost, LivingEntityUseItemFinishEvent,
+    LivingEntityUseItemStartEvent, LootDropsEvent, LootFunctionEvent, LootTableLoadEvent,
+    MayPlaceOnEvent, MenuQuickMoveEvent, MenuSlotRulesEvent, ModContainer,
+    ModifyDefaultComponentsEvent, NativeDispensed, NativeScreen, OnUseTickEvent,
     PerformBonemealEvent, PerformCommandEvent, PlaceBlockEvent, PlayerRespawnedEvent, RandomSource,
-    RandomTickEvent, RegisterCommandsEvent, RegisterConfigsEvent, RightClickBlockV2Event,
-    ScreenDrawEvent, ScreenEvent, ServerReloadListenerApplyEvent, ServerTickEvent,
-    StandaloneModelsEvent, TickEvent, TooltipEvent, UseAnimationEvent, UseDurationEvent,
-    UseItemEvent, UseItemOnEvent,
+    RandomTickEvent, RegisterCommandsEvent, RegisterConfigsEvent, RegisterGoalsEvent,
+    RightClickBlockV2Event, ScreenDrawEvent, ScreenEvent, ServerReloadListenerApplyEvent,
+    ServerTickEvent, StandaloneModelsEvent, TickEvent, TooltipEvent, UseAnimationEvent,
+    UseDurationEvent, UseItemEvent, UseItemOnEvent,
 };
 
 use config::Live;
@@ -77,6 +80,7 @@ struct Hempdustry {
     /// The config in force, shared with every part that reads it.
     settings: Live,
     configs: configs::Configs,
+    caring: creepers::Caring,
     defaults: OnceLock<Defaults>,
     states: OnceLock<States>,
     soil: OnceLock<Soil>,
@@ -91,6 +95,7 @@ impl Hempdustry {
         let settings = Live::default();
         Self {
             configs: configs::Configs::new(settings.clone()),
+            caring: creepers::Caring::default(),
             defaults: OnceLock::new(),
             states: OnceLock::new(),
             soil: OnceLock::new(),
@@ -602,5 +607,26 @@ impl Hooks for Hempdustry {
         }
         host.feedback(self.configs.reload());
         Flow::Cancel
+    }
+
+    /// Every creeper gets the hemp wander after its own goals (`CreeperEntityMixin`).
+    fn register_goals(&self, event: &mut RegisterGoalsEvent<'_>) {
+        if event.mob.kind.id == creepers::CREEPER {
+            let goal = creepers::SeekHemp::new(self.settings.clone(), self.caring.clone());
+            event.mob.ai.goals.add(5, goal);
+        }
+    }
+
+    fn entity_join_level(&self, host: &mut dyn Host, event: &mut EntityJoinLevelEvent<'_>) -> Flow {
+        if event.kind == creepers::CREEPER {
+            self.caring.joined(host, event.entity);
+        }
+        Flow::Continue
+    }
+
+    fn entity_leave_level(&self, _host: &mut dyn Host, event: &mut EntityLeaveLevelEvent<'_>) {
+        if event.kind == creepers::CREEPER {
+            self.caring.left(event.entity);
+        }
     }
 }
